@@ -91,8 +91,8 @@ data <- data %>%
 
 table(data$flag_speed)
 
-##data <-data %>%
-  #filter(flag_speed != "TRUE") 
+data <-data %>%
+  filter(flag_speed != "TRUE") 
 
 #Check for duplicates
 
@@ -102,18 +102,7 @@ duplicates <- data %>%
   arrange(desc(dupe_id))%>%
   filter(dupe_id > 1) ###None found
 
-# 3. Code all empty fields as NA
-
-data <- data %>%
-  mutate_all(~ifelse(is.na(.), "NA", .))
-
 ##Variables
-
-# For countries working on a national basis, copy org_country to country_focus, so that all respondents have a country_focus 
-
-data <- data %>%
-  mutate(country_focus = ifelse(org_geographic_lvl == "At the national level, operating almost exclusively within a single country",
-                                org_country, country_focus))
 
 #Remove unnecessary variables (note, keeping response ID for translation)
 
@@ -125,10 +114,11 @@ clean_data <- data %>%
 ## 
 
 ## Obtain final sample sizes 
+
 samplesize <- clean_data %>% summarise(n = n())
 print(samplesize)
 
-# Extracting text for translation
+# Extracting text for translation (leaving only responseID, language, and open ended responses)
 
 data_for_translation <- data %>%
   filter(q_language != 'EN') %>%
@@ -139,7 +129,7 @@ data_for_translation <- data %>%
          corporate_dissatisfy, policy_dissatisfy, insti_dissatisfy, direct_dissatisfy, other_dissatisfy, 
          participant_role_9_text)
 
-#Manually verified that they all contain foreign language text, with the exceptions of the ones below
+#Manually verified that they all contain foreign language text, with the exceptions of the responses below, which responded in English
 
 exclude_ids <- c("R_31tNOBC6h7aajmB", "R_pbn7EdCKVi7jSV3", "R_3KJ7bFlV3EvtEwV", "R_2xW43kI5YQJ1RPk", "R_2as3oIhfeiDyYju", "R_2PgOmUjVkduOId4", "R_OkasPyleXi8UNDb")
 
@@ -154,7 +144,9 @@ write.csv(data_for_translation, "data_for_translation.csv")
 data_for_excluded <- data %>%
   filter(q_language != 'EN') %>%  # Including this to maintain the original filter
   filter(response_id %in% exclude_ids)
-write.csv(data_for_excluded, "data_for_excluded.csv")
+
+## This line can be used to verify excluded data doesn't have any foreign language content 
+## write.csv(data_for_excluded, "data_for_excluded.csv")
 
 
 # -------------------------------
