@@ -47,54 +47,63 @@ table(data$consent, exclude = FALSE)
 data <- data %>% 
   filter(consent != "I DO NOT consent (this will eject you from the survey)") #removes 0 respondents
 
-##
+## Exclude survey responses that meet exclusion criteria  (do not work with Farmed land animals, Farmed aquatic animals or Dogs/ Cats raised for meat)# (Pre-registered: [https://osf.io/76dw4])
 
-# 1. Exclude survey responses that meet exclusion criteria  (do not work with Farmed land animals or Farmed aquatic animals)
+# Create a vector of target animal types
 
+target_animal_types <- c("Farmed land animals", "Farmed aquatic animals", "Dogs/cats used for meat", "Other animals (please specify)")
 
+# Verify that "other animal" responses could include farmed animals 
 
-# Check manually through "Other" options to determine whether they include farmed animals
-
-data %>%
-  filter(!grepl("Farmed land animals|Farmed aquatic animals", animal_type)) %>%
+other_animal_types_data <- data %>%
+  filter(!grepl("Farmed land animals|Farmed aquatic animals|Dogs/cats used for meat", animal_type)) %>%
   select(animal_type_8_text) %>%
   na.omit() %>%
   unique()
 
-# Create a vector of target animal types
-target_animal_types <- c("Farmed land animals", "Farmed aquatic animals")
-exclusion_types <- c("sick ,injured abandoned animals", "feral cats specifically, but also domesticated cats and dogs")
+view(other_animal_types_data)
 
-# Filter data to keep only rows with target animal types and without exclusion types
-data <- data %>% 
-  filter(grepl("Farmed land animals|Farmed aquatic animals", animal_type) & 
+# Create a vector for "other" animal types to exclude based on manual check (1 example that does not include farmed animals)
+
+exclusion_types <- c("feral cats specifically, but also domesticated cats and dogs")
+
+# Calculate how many respondes were excluded based on animal type 
+
+animal_excluded <- data %>%
+  filter(!(grepl("Farmed land animals|Farmed aquatic animals|Dogs/cats used for meat|Other animals", animal_type) &
+             !animal_type_8_text %in% exclusion_types))
+
+# Filter data
+data <- data %>%
+  filter(grepl("Farmed land animals|Farmed aquatic animals|Dogs/cats used for meat|Other animals", animal_type) & 
            !animal_type_8_text %in% exclusion_types)
 
-# Count the number of completed and incomplete surveys based on 'participant_role' (final question that was required)
+# Count and print excluded and included rows
+excluded_count <- nrow(animal_excluded)
+included_count <- nrow(data)
 
-completed_count <- nrow(filter(data, participant_role != ""))
-incomplete_count <- nrow(filter(data, participant_role == ""))
+print(paste("Excluded:", excluded_count)) ##"Excluded: 52"
+print(paste("Included:", included_count)) ##"Included: 226"
 
-# Display the counts ("Number of completed surveys:  176"; "Number of incomplete surveys:  40")
-#
-print(paste("Number of completed surveys: ", completed_count))
-print(paste("Number of incomplete surveys: ", incomplete_count))
-
-#Exclude those who responded too quickly
+## Exclude those who responded too quickly
+# Identify responses that exceed speed limit
 
 data <- data %>%
   mutate(duration_in_seconds = as.numeric(duration_in_seconds)) %>%
   mutate(speed_limit = median(duration_in_seconds) / 3,
          flag_speed = duration_in_seconds < speed_limit) 
 
-#Check proportion of those who were removed
+# Store and view excluded data based on speed limit
 
-table(data$flag_speed)
+speed_excluded <- data %>%
+  filter(flag_speed == TRUE)
+
+view(speed_excluded)### 15 excluded, we could consider re-including some responses, as our survey length was very dependent on selection (if you only picked one method,)
 
 data <-data %>%
   filter(flag_speed != "TRUE") 
 
-#Check for duplicates
+# Check for duplicates
 
 duplicates <- data %>%
   group_by(response_id) %>%
@@ -102,21 +111,26 @@ duplicates <- data %>%
   arrange(desc(dupe_id))%>%
   filter(dupe_id > 1) ###None found
 
-##Variables
-
-#Remove unnecessary variables (note, keeping response ID for translation)
+##Removing unnecessary variables (note, keeping response ID for translation)
 
 clean_data <- data %>%
   select(-c("start_date", "end_date", "status", "ip_address", "progress", "finished", "recorded_date",
             "recipient_last_name", "recipient_first_name", "recipient_email",
             "external_reference", "location_latitude", "location_longitude",
-            "distribution_channel", "pid"))
-## 
+            "distribution_channel", "pid", "interview_1"))
 
 ## Obtain final sample sizes 
 
 samplesize <- clean_data %>% summarise(n = n())
-print(samplesize)
+print(samplesize) #Final sample size: 211
+
+# Count the number of completed and incomplete surveys based on 'participant_role' (final question that was required)
+# ("Number of completed surveys:  186"; "Number of incomplete surveys:  25")
+
+completed_count <- nrow(filter(data, participant_role != ""))
+incomplete_count <- nrow(filter(data, participant_role == ""))
+print(paste("Number of completed surveys: ", completed_count))
+print(paste("Number of incomplete surveys: ", incomplete_count))
 
 # Extracting text for translation (leaving only responseID, language, and open ended responses)
 
@@ -129,12 +143,23 @@ data_for_translation <- data %>%
          corporate_dissatisfy, policy_dissatisfy, insti_dissatisfy, direct_dissatisfy, other_dissatisfy, 
          participant_role_9_text)
 
+view(data_for_translation)
+
 #Manually verified that they all contain foreign language text, with the exceptions of the responses below, which responded in English
 
-exclude_ids <- c("R_31tNOBC6h7aajmB", "R_pbn7EdCKVi7jSV3", "R_3KJ7bFlV3EvtEwV", "R_2xW43kI5YQJ1RPk", "R_2as3oIhfeiDyYju", "R_2PgOmUjVkduOId4", "R_OkasPyleXi8UNDb")
+exclude_ids <- c("R_31tNOBC6h7aajmB", "R_pbn7EdCKVi7jSV3", "R_3KJ7bFlV3EvtEwV", "R_2xW43kI5YQJ1RPk", "R_2as3oIhfeiDyYju", "R_2PgOmUjVkduOId4", "R_OkasPyleXi8UNDb", "R_2SCaTJf7UIS1BDn")
+
+#Verify excluded samples - one example is mixed EN/ID, there are only 4 words in Indonesian, so excluding (Semua hewan= all animals; Tidak dihitung = not calculated)
+
+verif_exclude_ids <- data_for_translation %>%
+  filter((response_id %in% exclude_ids))
+
+view(verif_exclude_ids)
 
 data_for_translation <- data_for_translation %>%
   filter(!(response_id %in% exclude_ids))
+
+view(data_for_translation)
 
 # Write the filtered data to a CSV file
 write.csv(data_for_translation, "data_for_translation.csv")
@@ -145,9 +170,7 @@ data_for_excluded <- data %>%
   filter(q_language != 'EN') %>%  # Including this to maintain the original filter
   filter(response_id %in% exclude_ids)
 
-## This line can be used to verify excluded data doesn't have any foreign language content 
-## write.csv(data_for_excluded, "data_for_excluded.csv")
-
+view(data_for_excluded)
 
 # -------------------------------
 # De-identifying 
