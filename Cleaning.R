@@ -67,7 +67,7 @@ view(other_animal_types_data)
 
 exclusion_types <- c("feral cats specifically, but also domesticated cats and dogs")
 
-# Calculate how many respondes were excluded based on animal type 
+# Calculate how many responses were excluded based on animal type 
 
 animal_excluded <- data %>%
   filter(!(grepl("Farmed land animals|Farmed aquatic animals|Dogs/cats used for meat|Other animals", animal_type) &
@@ -82,7 +82,7 @@ data <- data %>%
 excluded_count <- nrow(animal_excluded)
 included_count <- nrow(data)
 
-print(paste("Excluded:", excluded_count)) ##"Excluded: 52"
+print(paste("Excluded:", excluded_count)) ##"Excluded: 52 because they didn't meet the inclusion criteria (animal_type)"
 print(paste("Included:", included_count)) ##"Included: 226"
 
 ## Exclude those who responded too quickly
@@ -98,10 +98,10 @@ data <- data %>%
 speed_excluded <- data %>%
   filter(flag_speed == TRUE)
 
-view(speed_excluded)### 15 excluded, we could consider re-including some responses, as our survey length was very dependent on selection (if you only picked one method,)
+view(speed_excluded)### 15 excluded, currently retaining "R_1obeZxneDwoVnfN", which misses the speed limit, but answered fewer questions due to the nature of early responses
 
-data <-data %>%
-  filter(flag_speed != "TRUE") 
+data <- data %>%
+  filter(flag_speed != "TRUE" | response_ID == "R_1obeZxneDwoVnfN")
 
 # Check for duplicates
 
@@ -110,6 +110,12 @@ duplicates <- data %>%
   summarise(dupe_id = n()) %>%
   arrange(desc(dupe_id))%>%
   filter(dupe_id > 1) ###None found
+
+# Manually look for org name duplicates, note that language is still not recoded
+
+view(data[, c("org_name", "org_country", "country_focus", "q_language")])
+
+#Duplicate org names: Anonymous for the voiceless (1 in HK, 1 in Taiwan), Impactful Animal Advocacy (1 online only, 1 in UK), Mercy For Animals (Philippines, Multiple, Malaysia), Princípio Animal (Both Brazil), Shrimp Welfare Project (1 in India, 1 in Vietnam)
 
 ##Removing unnecessary variables (note, keeping response ID for translation)
 
