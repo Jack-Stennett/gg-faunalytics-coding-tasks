@@ -98,10 +98,10 @@ data <- data %>%
 speed_excluded <- data %>%
   filter(flag_speed == TRUE)
 
-view(speed_excluded)### 15 excluded, currently retaining "R_1obeZxneDwoVnfN", which misses the speed limit, but answered fewer questions due to the nature of early responses
+View(speed_excluded)### 14 excluded, currently retaining "R_1obeZxneDwoVnfN", which misses the speed limit, but answered fewer questions due to the nature of early responses
 
 data <- data %>%
-  filter(flag_speed != "TRUE" | response_ID == "R_1obeZxneDwoVnfN")
+  filter(flag_speed != TRUE | response_id == "R_1obeZxneDwoVnfN")
 
 # Check for duplicates
 
@@ -128,17 +128,17 @@ clean_data <- data %>%
 ## Obtain final sample sizes 
 
 samplesize <- clean_data %>% summarise(n = n())
-print(samplesize) #Final sample size: 211
+print(samplesize) #Final sample size: 212
 
 # Count the number of completed and incomplete surveys based on 'participant_role' (final question that was required)
-# ("Number of completed surveys:  186"; "Number of incomplete surveys:  25")
+# ("Number of completed surveys:  186"; "Number of incomplete surveys: 26")
 
 completed_count <- nrow(filter(data, participant_role != ""))
 incomplete_count <- nrow(filter(data, participant_role == ""))
 print(paste("Number of completed surveys: ", completed_count))
 print(paste("Number of incomplete surveys: ", incomplete_count))
 
-# Extracting text for translation (leaving only responseID, language, and open ended responses)
+# Extracting text for translation (leaving only response_id, language, and open ended responses)
 
 data_for_translation <- data %>%
   filter(q_language != 'EN') %>%
