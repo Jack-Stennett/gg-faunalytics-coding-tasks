@@ -9,11 +9,6 @@
 ## Remove all objects from the current workspace 
 rm(list = ls())
 
-#install.packages("tidyverse") 
-#install.packages("janitor")
-#install.packages("stringr")
-#install.packages("naniar")
-
 # Load required libraries
 library(dplyr)
 library(tidyr)
@@ -106,15 +101,16 @@ data$country_focus <- gsub("Congo, Republic of the\\.{3}", "Republic of the Cong
 data$org_country <- gsub("Hong Kong \\(S\\.A\\.R\\.\\)", "Hong Kong SAR", data$org_country)
 data$org_country <- gsub("Congo, Republic of the\\.{3}", "Republic of the Congo", data$org_country)
 
-#Background: We had an issue with Qualtrics where we were unable to move certain countries around for respondents in different languages without disabling the multiple choice selection, 
-# and this would make it difficult for respondents to find their given country, especially when alphabetical ordering works differently in translation, 
-# The solution we found was to translate the countries Afghanistan, Albania, and Algeria into the more likely options for a given translated non-English option, 
-# so that when they respond, the country where this language is spoken is the 1st-3rd choice. When someone chooses the first option (e.g. a JP respondent chooses Japan),
-# it is automatically stored in the data as "Afghanistan", but when combined with a given Q_language variable, we can recode to "Japan". 
-# "For traditional Chinese we replaced Afghanistan with Taiwan, Albania with Hong Kong, and Algeria with Macau. 
+# Background: We had an issue with Qualtrics where we were unable to move certain countries around for respondents in different languages without disabling the multiple choice selection, 
+# and this would make it difficult for respondents to find their given country. The solution we found was to translate the countries Afghanistan, Albania, and Algeria into the more likely options for a given translated non-English option, 
+# so that when they respond, the country where this language is spoken is the 1st-3rd choice. When someone chooses the first option (which is read as 'Japan', if the language is JP),
+# it is automatically stored in the data as "Afghanistan". This can be the case with multiple options, for example, for  ZH-T/ traditional Chinese we replaced Afghanistan with Taiwan, Albania with Hong Kong, and Algeria with Macau.)
+
+# When combined with a given Q_language variable, we can recode to the desired choice. 
+
 data <- data %>% 
   mutate(
-    corrected_country = case_when(
+    corrected_org_country = case_when(
       q_language == "PT-BR" ~ str_replace_all(org_country, c("Afghanistan" = "Brazil", "Albania" = "Portugal")),
       q_language == "JA" ~ str_replace_all(org_country, "Afghanistan", "Japan"),
       q_language == "TGL" ~ str_replace_all(org_country, "Afghanistan", "Philippines"),
@@ -150,16 +146,16 @@ data <- data %>%
 # Code to verify, note that we left countries in the same order for Spanish. 
 
 filtered_data <- data %>% filter(q_language != "EN" & q_language != "ES-ES")
-#view(filtered_data[, c("org_country", "corrected_country", "country_focus", "corrected_country_focus", "q_language")])
+view(filtered_data[, c("org_country", "corrected_org_country", "country_focus", "corrected_country_focus", "q_language")])
 
 # Make changes to initial variables
 
 data <- data %>% mutate(
-  org_country = corrected_country,
+  org_country = corrected_org_country,
   country_focus = corrected_country_focus
 )
 
-# We have two variables 1) org_country (all countries they worked in), and 2) country_focus (specific focus, only for those who gave multiple responses for org_country)
+# We have two variables 1) org_country (all countries they worked in), and 2) country_focus (only for those who gave multiple responses for org_country)
 # Those who chose a single response for org_country did not answer country_focus, therefore this code copies org_country to country_focus 
 
 data <- data %>%
@@ -410,7 +406,7 @@ print(table(data$western_vs_nonwestern))
 #     11         132          6                  61          2
 
 # -------------------------------
-# Recoding Western/ Non-Western Country Dummy Variables 
+# Recoding likert variables
 # -------------------------------
 
 # Variables list
@@ -482,7 +478,6 @@ for (column in satisfied_cols) {
 unique(data$interest_diet)
 unique(data$interest_diet_3p)
 
-          
 #Verification
 
 view(data[, c("interest_corp", "interest_corp_3p")])
@@ -611,6 +606,9 @@ selected_data_animal_type <- data %>%
 
 view(selected_data_animal_type)
 
+print(table(data$animal_type_aquatic_farm)) # 111 work on aquatic farmed animals
+print(table(data$animal_type_land_farm))# 197 work on land farmed animals
+
 # -------------------------------
 # Recoding org_advocacy variables
 # -------------------------------
@@ -649,11 +647,12 @@ levels(data$org_geographic_lvl) # 3
 levels(data$org_size) # 7
 levels(data$org_mission) # 4
 levels(data$western_vs_nonwestern) # 5
-levels(data$advocacy_diet)
-#This also has too many levels, because it's multiple choice, change to binary as well?
-levels(data$participant_role)
-#This also has too many levels, because it's multiple choice, change to binary as well?
+levels(data$org_focus) # 6
 
+#These (below) have too many levels, because it's multiple choice, change to multiple binary variables as well? (also "advocacy_corporate","advocacy_policy", "advocacy_inst", "participant_role")
+
+levels(data$advocacy_diet)
+levels(data$participant_role)
 
 # Check the classes after factorization
 sapply(data[cols_to_factorize], class)
