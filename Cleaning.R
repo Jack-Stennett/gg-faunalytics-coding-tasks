@@ -10,7 +10,7 @@
 ## Remove all objects from the current workspace 
 rm(list = ls())
 
-#Set working directory (ISSN = International Study of Strategy and Needs)
+#Set working directory
 setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
 
 # Load required libraries
@@ -98,7 +98,7 @@ data <- data %>%
 speed_excluded <- data %>%
   filter(flag_speed == TRUE)
 
-View(speed_excluded)### 14 excluded, currently retaining "R_1obeZxneDwoVnfN", which misses the speed limit, but answered fewer questions due to the nature of early responses
+#view(speed_excluded)### 14 excluded, currently retaining "R_1obeZxneDwoVnfN", which misses the speed limit, but answered fewer questions due to the nature of early responses
 
 data <- data %>%
   filter(flag_speed != TRUE | response_id == "R_1obeZxneDwoVnfN")
@@ -113,17 +113,19 @@ duplicates <- data %>%
 
 # Manually look for org name duplicates, note that language is still not recoded
 
-view(data[, c("org_name", "org_country", "country_focus", "q_language")])
+#view(data[, c("org_name", "org_country", "country_focus", "q_language")])
 
-#Duplicate org names: Anonymous for the voiceless (1 in HK, 1 in Taiwan), Impactful Animal Advocacy (1 online only, 1 in UK), Mercy For Animals (Philippines, Multiple, Malaysia), Princípio Animal (Both Brazil), Shrimp Welfare Project (1 in India, 1 in Vietnam)
+#Duplicate org names: Anonymous for the voiceless (1 in HK, 1 in Taiwan), Impactful Animal Advocacy (1 online only, 1 in UK), 
+#Mercy For Animals (Philippines, Multiple, Malaysia), Princípio Animal (Both Brazil), Shrimp Welfare Project (1 in India, 1 in Vietnam)
+#We thinkg that answers are sufficiently different that we should include all organisation duplicates, but this should be noted in the supplementary materials.
 
 ##Removing unnecessary variables (note, keeping response ID for translation)
 
 clean_data <- data %>%
-  select(-c("start_date", "end_date", "status", "ip_address", "progress", "finished", "recorded_date",
-            "recipient_last_name", "recipient_first_name", "recipient_email",
+  select(-c("start_date", "end_date", "status", "ip_address", "progress", "finished", "recorded_date", 
+            "recipient_last_name", "recipient_first_name", "recipient_email", 
             "external_reference", "location_latitude", "location_longitude",
-            "distribution_channel", "pid", "interview_1"))
+            "distribution_channel", "pid", "interview_1", "consent", "speed_limit", "flag_speed", "duration_in_seconds"))
 
 ## Obtain final sample sizes 
 
@@ -149,7 +151,7 @@ data_for_translation <- data %>%
          corporate_dissatisfy, policy_dissatisfy, insti_dissatisfy, direct_dissatisfy, other_dissatisfy, 
          participant_role_9_text)
 
-view(data_for_translation)
+#view(data_for_translation)
 
 #Manually verified that they all contain foreign language text, with the exceptions of the responses below, which responded in English
 
@@ -160,12 +162,12 @@ exclude_ids <- c("R_31tNOBC6h7aajmB", "R_pbn7EdCKVi7jSV3", "R_3KJ7bFlV3EvtEwV", 
 verif_exclude_ids <- data_for_translation %>%
   filter((response_id %in% exclude_ids))
 
-view(verif_exclude_ids)
+#view(verif_exclude_ids)
 
 data_for_translation <- data_for_translation %>%
   filter(!(response_id %in% exclude_ids))
 
-view(data_for_translation)
+#view(data_for_translation)
 
 # Write the filtered data to a CSV file
 write.csv(data_for_translation, "data_for_translation.csv")
@@ -176,13 +178,13 @@ data_for_excluded <- data %>%
   filter(q_language != 'EN') %>%  # Including this to maintain the original filter
   filter(response_id %in% exclude_ids)
 
-view(data_for_excluded)
+#view(data_for_excluded)
 
 # -------------------------------
 # De-identifying 
 # -------------------------------
 clean_data <- clean_data %>%
-  select(-c("org_name", "participant_email", "interview_1"))
+  select(-c("org_name", "participant_email"))
 
 # -------------------------------
 # Save final cleaned dataset 
