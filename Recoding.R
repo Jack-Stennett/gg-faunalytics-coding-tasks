@@ -508,6 +508,27 @@ for (column in resources_cols) {
 # Factorising other variables
 # -------------------------------
 
+# Copies mutually exclusive variable for org_focus
+
+data <- data %>%
+  mutate(
+    org_focus = ifelse(
+      is.na(org_focus) & 
+        (str_count(org_advocacy, "Other") + 
+           str_count(org_advocacy, "Policy") + 
+           str_count(org_advocacy, "Individual") + 
+           str_count(org_advocacy, "Corporate") + 
+           str_count(org_advocacy, "Direct") +
+           str_count(org_advocacy, "Institutional") == 1), 
+      org_advocacy, 
+      org_focus
+    )
+  )
+
+org_advocacy_focus <- data[c("org_focus", "org_advocacy")]
+view(org_advocacy_focus)
+
+
 # Check current levels (none currently factorised)
 unique(data$animal_type)
 unique(data$org_advocacy)
@@ -644,17 +665,8 @@ levels(data$org_years) # 5
 levels(data$org_geographic_lvl) # 3
 levels(data$org_size) # 7
 levels(data$org_mission) # 4
-levels(data$western_vs_nonwestern) # 5
+levels(data$western_vs_nonwestern) # 4
 levels(data$org_focus) # 6
-
-
-#These (below) have too many levels, because it's multiple select, change to multiple binary variables as well? (also "advocacy_corporate","advocacy_policy", "advocacy_inst", "participant_role")
-
-levels(data$advocacy_diet)
-levels(data$advocacy_corporate)
-levels(data$advocacy_inst)
-levels(data$advocacy_policy)
-levels(data$participant_role)
 
 # -------------------------------
 # Recoding advocacy_diet variables
@@ -688,6 +700,7 @@ new_vars_corporate <- data[, grepl("advocacy_corporate", names(data))]
 new_vars_policy <- data[, grepl("advocacy_policy", names(data))]
 new_vars_institutional <- data[, grepl("advocacy_inst", names(data))]
 
+#Confirming subsets
 
 View(new_vars_diet)
 View(new_vars_corporate)
@@ -697,7 +710,6 @@ View(new_vars_institutional)
 # -------------------------------
 # Verifying classes and factors
 # -------------------------------
-
 
 # Check the classes after factorization
 sapply(data[cols_to_factorize], class)
