@@ -117,7 +117,7 @@ duplicates <- data %>%
 
 #Duplicate org names: Anonymous for the voiceless (1 in HK, 1 in Taiwan), Impactful Animal Advocacy (1 online only, 1 in UK), 
 #Mercy For Animals (Philippines, Multiple, Malaysia), Princípio Animal (Both Brazil), Shrimp Welfare Project (1 in India, 1 in Vietnam)
-#We thinkg that answers are sufficiently different that we should include all organisation duplicates, but this should be noted in the supplementary materials.
+#We think that answers are sufficiently different that we should include all organisation duplicates, but this should be noted in the supplementary materials.
 
 ##Removing unnecessary variables (note, keeping response ID for translation)
 

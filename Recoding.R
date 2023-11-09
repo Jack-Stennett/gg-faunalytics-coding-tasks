@@ -167,8 +167,8 @@ data <- data %>%
 View(data[, c("org_country", "country_focus")]) 
 
 sum(is.na(data$org_country)) ## 2 non-responses (unfinished)
-sum(is.na(data$country_focus)) ## 8 non-responses  (unfinished)
-sum(!is.na(data$country_focus)) ## 204 responses with valid responses
+sum(is.na(data$country_focus)) ## 6 non-responses  (unfinished)
+sum(!is.na(data$country_focus)) ## 206 responses with valid responses
 
 # -------------------------------
 # Recoding budget variables
@@ -393,7 +393,7 @@ data <- data %>%
     str_detect(country_focus, western_pattern) ~ "Western",
     str_detect(country_focus, non_western_pattern) ~ "Non-Western",
     str_detect(country_focus, "Online only") ~ "Online only",
-    TRUE ~ "NA"
+    TRUE ~ NA
   ))
 
 # Verifying
@@ -483,9 +483,7 @@ unique(data$interest_diet_3p)
 view(data[, c("interest_corp", "interest_corp_3p")])
 
 # Check transformed columns of interest_diet for an example, numbers match (13 Uninterested (9+4), 19 Neutral; 33 interested (19+14), 147 NAs)
-print("Summary for interest_diet:")
 print(summary(data$interest_diet))
-print("Summary for interest_diet_3p:")
 print(summary(data$interest_diet_3p))
 
 # Verify changes for factors_importance columns
@@ -511,10 +509,10 @@ for (column in resources_cols) {
 # -------------------------------
 
 # Check current levels (none currently factorised)
-levels(data$animal_type)
-levels(data$org_advocacy)
-levels(data$org_size)
-levels(data$org_years)
+unique(data$animal_type)
+unique(data$org_advocacy)
+unique(data$org_size)
+unique(data$org_years)
 
 # Reorder 'org_size' levels
 data$org_size <- factor(data$org_size, 
@@ -608,6 +606,7 @@ view(selected_data_animal_type)
 
 print(table(data$animal_type_aquatic_farm)) # 111 work on aquatic farmed animals
 print(table(data$animal_type_land_farm))# 197 work on land farmed animals
+print(table(data$animal_type_dogcat_meat))# 46 work on dog/cat meat
 
 # -------------------------------
 # Recoding org_advocacy variables
@@ -619,7 +618,6 @@ data$advocacy_type_institutional <- as.integer(grepl("Institutional campaigns", 
 data$advocacy_type_direct_work <- as.integer(grepl("Direct work", data$org_advocacy))
 data$advocacy_type_individual_diet <- as.integer(grepl("Individual diet outreach", data$org_advocacy))
 data$advocacy_type_other <- as.integer(grepl("Other", data$org_advocacy))
-
 
 data$advocacy_type_institutional[data$org_advocacy_6_text == "Educational Programs in Schools and Outreach Events"] <- 1
 data$advocacy_type_individual_diet[data$org_advocacy_6_text == "Influence people about benefit from being Vegetarian & Vegan. Introduce the delicious food that not come from animals"] <- 1
@@ -649,10 +647,57 @@ levels(data$org_mission) # 4
 levels(data$western_vs_nonwestern) # 5
 levels(data$org_focus) # 6
 
-#These (below) have too many levels, because it's multiple choice, change to multiple binary variables as well? (also "advocacy_corporate","advocacy_policy", "advocacy_inst", "participant_role")
+
+#These (below) have too many levels, because it's multiple select, change to multiple binary variables as well? (also "advocacy_corporate","advocacy_policy", "advocacy_inst", "participant_role")
 
 levels(data$advocacy_diet)
+levels(data$advocacy_corporate)
+levels(data$advocacy_inst)
+levels(data$advocacy_policy)
 levels(data$participant_role)
+
+# -------------------------------
+# Recoding advocacy_diet variables
+# -------------------------------
+
+data$advocacy_diet_inperson <- as.integer(grepl("In-person", data$advocacy_diet))
+data$advocacy_diet_online <- as.integer(grepl("Online", data$advocacy_diet))
+data$advocacy_diet_community <- as.integer(grepl("Community", data$advocacy_diet))
+data$advocacy_diet_other <- as.integer(grepl("Other", data$advocacy_diet))
+
+data$advocacy_corporate_producers_cage_crate_free <- as.integer(grepl("Campaigning for producers", data$advocacy_corporate))
+data$advocacy_corporate_business_vegan <- as.integer(grepl("Campaigns to increase", data$advocacy_corporate))
+data$advocacy_corporate_business_ethical_other <- as.integer(grepl("Campaigns for businesses", data$advocacy_corporate))
+data$advocacy_corporate_other <- as.integer(grepl("Other", data$advocacy_corporate))
+
+data$advocacy_policy_cage_crate_free_legislation <- as.integer(grepl("Cage-free", data$advocacy_policy))
+data$advocacy_policy_other_welfare_legislation <- as.integer(grepl("Other legislation or", data$advocacy_policy))
+data$advocacy_policy_plantbased_label_regulation <- as.integer(grepl("related to plant-based", data$advocacy_policy))
+data$advocacy_policy_meat_label_regulation <- as.integer(grepl("related to meat", data$advocacy_policy))
+data$advocacy_policy_other <- as.integer(grepl("Please specify", data$advocacy_policy))
+
+data$advocacy_inst_educating_students_teachers <- as.integer(grepl("Educating students", data$advocacy_inst))
+data$advocacy_inst_vegan_vegetarian_educational_institutions <- as.integer(grepl("educational institutions", data$advocacy_inst))
+data$advocacy_inst_vegan_vegetarian_prisons <- as.integer(grepl("prisons", data$advocacy_inst))
+data$advocacy_inst_vegan_vegetarian_hospitals <- as.integer(grepl("hospitals", data$advocacy_inst))
+data$advocacy_inst_other <- as.integer(grepl("Other", data$advocacy_inst))
+
+# Create a subset with just the new variables
+new_vars_diet <- data[, grepl("advocacy_diet", names(data))]
+new_vars_corporate <- data[, grepl("advocacy_corporate", names(data))]
+new_vars_policy <- data[, grepl("advocacy_policy", names(data))]
+new_vars_institutional <- data[, grepl("advocacy_inst", names(data))]
+
+
+View(new_vars_diet)
+View(new_vars_corporate)
+View(new_vars_policy)
+View(new_vars_institutional)
+
+# -------------------------------
+# Verifying classes and factors
+# -------------------------------
+
 
 # Check the classes after factorization
 sapply(data[cols_to_factorize], class)
