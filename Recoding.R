@@ -106,11 +106,14 @@ data$org_country <- gsub("Congo, Republic of the\\.{3}", "Republic of the Congo"
 # so that when they respond, the country where this language is spoken is the 1st-3rd choice. When someone chooses the first option (which is read as 'Japan', if the language is JP),
 # it is automatically stored in the data as "Afghanistan". This can be the case with multiple options, for example, for  ZH-T/ traditional Chinese we replaced Afghanistan with Taiwan, Albania with Hong Kong, and Algeria with Macau.)
 
+data$uncorrected_org_country = data$org_country
+data$uncorrected_country_focus = data$country_focus 
+
 # When combined with a given Q_language variable, we can recode to the desired choice. 
 
 data <- data %>% 
   mutate(
-    corrected_org_country = case_when(
+    org_country = case_when(
       q_language == "PT-BR" ~ str_replace_all(org_country, c("Afghanistan" = "Brazil", "Albania" = "Portugal")),
       q_language == "JA" ~ str_replace_all(org_country, "Afghanistan", "Japan"),
       q_language == "TGL" ~ str_replace_all(org_country, "Afghanistan", "Philippines"),
@@ -128,7 +131,7 @@ data <- data %>%
 
 data <- data %>% 
   mutate(
-    corrected_country_focus = case_when(
+    country_focus = case_when(
       q_language == "PT-BR" ~ str_replace_all(country_focus, c("Afghanistan" = "Brazil", "Albania" = "Portugal")),
       q_language == "JA" ~ str_replace_all(country_focus, "Afghanistan", "Japan"),
       q_language == "TGL" ~ str_replace_all(country_focus, "Afghanistan", "Philippines"),
@@ -146,14 +149,7 @@ data <- data %>%
 # Code to verify, note that we left countries in the same order for Spanish. 
 
 filtered_data <- data %>% filter(q_language != "EN" & q_language != "ES-ES")
-view(filtered_data[, c("org_country", "corrected_org_country", "country_focus", "corrected_country_focus", "q_language")])
-
-# Make changes to initial variables
-
-data <- data %>% mutate(
-  org_country = corrected_org_country,
-  country_focus = corrected_country_focus
-)
+view(filtered_data[, c("uncorrected_org_country", "org_country", "uncorrected_country_focus", "country_focus", "q_language")])
 
 # We have two variables 1) org_country (all countries they worked in), and 2) country_focus (only for those who gave multiple responses for org_country)
 # Those who chose a single response for org_country did not answer country_focus, therefore this code copies org_country to country_focus 
@@ -525,9 +521,9 @@ data <- data %>%
     )
   )
 
+#Verifying
 org_advocacy_focus <- data[c("org_focus", "org_advocacy")]
 view(org_advocacy_focus)
-
 
 # Check current levels (none currently factorised)
 unique(data$animal_type)
@@ -719,5 +715,5 @@ recoded_data <- data
 # -------------------------------
 # Save recoded dataset 
 # -------------------------------
-write.csv(recoded_data, "data_recoded.csv")
+
 save(recoded_data, file='data_recoded.Rdata')
