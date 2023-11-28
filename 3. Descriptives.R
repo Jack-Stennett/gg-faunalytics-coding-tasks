@@ -18,6 +18,11 @@ library(plotly)
 #Set working directory
 setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
 
+# Create the "Exported Descriptive Tables" folder if it doesn't exist
+if (!file.exists("Exported Descriptive Tables")) {
+  dir.create("Exported Descriptive Tables")
+}
+
 # Read the recoded data
 load("data_recoded.RData")
 
