@@ -16,6 +16,7 @@ setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategie
 library(tidyverse)
 library(fastDummies)
 library(lmtest)
+library(MASS)
 
 # Read the recoded data
 load("data_recoded.RData")
@@ -338,41 +339,30 @@ summary(model5b)
 
 #Tests for BH correction
 
-model1b_summary <- summary(model1b)
-p_values <- model1b_summary$coefficients[, 4]
-adjusted_p_values <- p.adjust(p_values, method = "BH")
+# Collect p-values from each model
+all_p_values <- list(
+  model1b = summary(model1b)$coefficients[, 4],
+  model2b = summary(model2b)$coefficients[, 4],
+  model3b = summary(model3b)$coefficients[, 4],
+  model4b = summary(model4b)$coefficients[, 4],
+  model5b = summary(model5b)$coefficients[, 4]
+)
+
+# Apply BH correction and print adjusted p-values for each model
+adjusted_p_values <- lapply(all_p_values, function(p) p.adjust(p, method = "BH"))
 print(adjusted_p_values)
 
-# org_size_1 and org_size_2 (less than 1 staff member, 1-5 staff members) are the only significant variables, indicating that org_size
-# correlates significantly with advocacy choice
+#Model 1b: org_size_1 and org_size_2 (less than 1 staff member, 1-5 staff members) and importance talent availability are the only significant variables, indicating that org_size
+# correlates significantly with advocacy choice, and that talent constraits correlate with choosing corporate advocacy.
 
-model2b_summary <- summary(model2b)
-p_values <- model2b_summary$coefficients[, 4]
-adjusted_p_values <- p.adjust(p_values, method = "BH")
-print(adjusted_p_values)
+# Model 2b: Nothing remains significant before or after adjustment - individual diet interventions are therefore not significantly affected
 
-#Nothing remains significant before or after adjustment - individual diet interventions are therefore not significantly affected
+# Model 3b: Animal type is significantly associated with model3, and animal_type_aquatic_farm_1 and animal_type_dogcat_meat_1 are negatively associated; importance of funding availability and cost-effectiveness 
+# do not meet the threshold
 
-model3b_summary <- summary(model3b)
-p_values <- model3b_summary$coefficients[, 4]
-adjusted_p_values <- p.adjust(p_values, method = "BH")
-print(adjusted_p_values)
+#Model 4b: org_size_1 is significant
 
-#Animal type is significantly associated with model3, and animal_type_aquatic_farm_1 and animal_type_dogcat_meat_1 are negatively associated
-
-model4b_summary <- summary(model4b)
-p_values <- model4b_summary$coefficients[, 4]
-adjusted_p_values <- p.adjust(p_values, method = "BH")
-print(adjusted_p_values)
-
-#org_size_1 is significant
-
-model5b_summary <- summary(model5b)
-p_values <- model5b_summary$coefficients[, 4]
-adjusted_p_values <- p.adjust(p_values, method = "BH")
-print(adjusted_p_values)
-
-#org_size_1 is significant
+# Model 5b : org_size_1 is significant
 
 ############
 ## RQ3: How useful are different resources? 
@@ -381,58 +371,7 @@ print(adjusted_p_values)
 # Mann Whitney Tests for RQ3 (To understand the usefulness of different resources (RQ3), usefulness ratings will be compared between each resource type measured using
 # Mann-Whitney U tests with multiple testing corrected across all tests by using the Benjamini-Hochberg correction for false discovery rate (i.e., FDR correction). )
 
-# List of variables
-variables <- c("resources_usefulness_collaboration_networking",
-               "resources_usefulness_financial",
-               "resources_usefulness_finding_talent",
-               "resources_usefulness_grant_applications",
-               "resources_usefulness_professional_development",
-               "resources_usefulness_professional_mentorship",
-               "resources_usefulness_research_data_access",
-               "resources_usefulness_staff_well_being")
 
-# Initialize an empty dataframe to store results
-results_df <- data.frame(Comparison = character(0),
-                         P_Value = numeric(0),
-                         Greater_Median = character(0),
-                         Median_Difference = numeric(0),
-                         stringsAsFactors = FALSE)
-
-# Loop over each pair of variables and perform the test
-for (i in 1:(length(variables) - 1)) {
-  for (j in (i + 1):length(variables)) {
-    # Convert ordered factors to numeric
-    x_numeric <- as.numeric(data[[variables[i]]])
-    y_numeric <- as.numeric(data[[variables[j]]])
-    
-    # Perform Mann-Whitney U Test
-    result <- wilcox.test(x_numeric, y_numeric)
-    
-    # Extract p-value and calculate median difference
-    p_value <- result$p.value
-    mean_x <- mean(x_numeric, na.rm = TRUE)
-    mean_y <- mean(y_numeric, na.rm = TRUE)
-    mean_difference <- abs(mean_x - mean_y)
-    greater_mean <- ifelse(mean_x > mean_y, variables[i], variables[j])
-    
-    # Append results to the dataframe
-    results_df <- rbind(results_df, data.frame(Comparison = paste(variables[i], "vs", variables[j]),
-                                               P_Value = p_value,
-                                               Greater_Mean = greater_mean,
-                                               Mean_Difference = mean_difference,
-                                               stringsAsFactors = FALSE))
-  }
-}
-
-# Apply Benjamini-Hochberg correction for multiple testing
-adjusted_p_values <- p.adjust(results_df$P_Value, method = "BH")
-results_df$Adjusted_P_Value <- adjusted_p_values
-
-# Sort the dataframe by adjusted p-value
-results_df <- results_df[order(results_df$Adjusted_P_Value), ]
-
-# Print the sorted results with adjusted p-values
-print(results_df)
 
 # List of variables
 variables <- c("resources_usefulness_collaboration_networking",
@@ -444,7 +383,9 @@ variables <- c("resources_usefulness_collaboration_networking",
                "resources_usefulness_research_data_access",
                "resources_usefulness_staff_well_being")
 
+# Find the means of each response
 # Initialize a dataframe to store the results
+
 stats_df <- data.frame(Variable = character(),
                        Mean = numeric(),
                        stringsAsFactors = FALSE)
@@ -479,17 +420,74 @@ print(stats_df)
 # 6. Professional Development
 # 7. Finding Talent
 # 8. Staff well-being
+# Assuming stats_df is already sorted and printed as shown above
+
+# Initialize an empty dataframe for results
+comparison_results <- data.frame(
+  Resource_A = character(0),
+  Resource_B = character(0),
+  P_Value = numeric(0),
+  Significant = logical(0),
+  stringsAsFactors = FALSE
+)
+
+# Variable to keep track of the current index for Resource_A
+current_index <- 1
+
+# Loop through the variables in the order of means
+while (current_index < nrow(stats_df)) {
+  resource_a <- stats_df$Variable[current_index]
+  resource_b <- stats_df$Variable[current_index + 1]
+  
+  # Convert ordered factors to numeric
+  a_numeric <- as.numeric(data[[resource_a]])
+  b_numeric <- as.numeric(data[[resource_b]])
+  
+  # Perform Mann-Whitney U Test
+  test_result <- wilcox.test(a_numeric, b_numeric)
+  
+  # Check if the difference is significant
+  is_significant <- test_result$p.value < 0.05
+  
+  # Append results to the dataframe
+  comparison_results <- rbind(comparison_results, data.frame(
+    Resource_A = resource_a,
+    Resource_B = resource_b,
+    P_Value = test_result$p.value,
+    Significant = is_significant
+  ))
+  
+  # Advance Resource_A only if the difference is significant
+  if (is_significant || current_index == nrow(stats_df) - 1) {
+    current_index <- current_index + 1
+  } else {
+    # If not significant, keep Resource_A same and increment Resource_B in the next iteration
+    stats_df <- stats_df[-(current_index + 1), ]
+  }
+}
+
+# Apply Benjamini-Hochberg correction to the p-values
+adjusted_p_values <- p.adjust(comparison_results$P_Value, method = "BH")
+
+# Add the adjusted p-values to the results dataframe
+comparison_results$Adjusted_P_Value <- adjusted_p_values
+
+# Determine significance based on the adjusted p-values
+# (p = 0.05)
+
+comparison_results$Adjusted_Significant <- comparison_results$Adjusted_P_Value < 0.05
+
+# Print the results with adjusted p-values and significance
+print(comparison_results)
 
 #RQ4: What resources would best support different types of groups?
 # For RQ4 , our goal is to detect a medium effect size (f2 = 0.15) using a two-tailed linear multivariate regression 
 # with 80% power and alpha corrected for (0.05/22 contrasts = 0.0022). This requires 107 participants per model. 
 
-ord_regression <- function(dependent_var) {
-  # Load necessary library
-  library(MASS)
+ord_regression_raw_pvals <- function(dependent_var, dependent_var_name, data) {
   
   # Define the model formula
-  formula <- as.formula(paste("as.ordered(", deparse(substitute(dependent_var)), ") ~ org_size_1 + org_size_2 + 
+  formula <- as.formula(paste("as.ordered(", dependent_var_name, ") ~ org_size_1 + org_size_2 + 
                                org_size_3 + org_size_4 + org_size_5 + animal_type_aquatic_farm_1 + 
                                animal_type_dogcat_meat_1 + animal_type_land_farm_1 + org_years_1 + 
                                org_years_2 + org_years_3 + western_vs_nonwesternmixed + 
@@ -499,30 +497,90 @@ ord_regression <- function(dependent_var) {
   model <- polr(formula, data = data, Hess = TRUE)
   model_summary <- summary(model)
   
-  # Number of observations
+  # Number of observations + degrees of freedom
   n <- nrow(data)
-  
-  # Calculate degrees of freedom
   df <- n - length(model_summary$coefficients) - 1
   
   # Calculate p-values
   p_values <- 2 * pt(-abs(model_summary$coefficients[, "t value"]), df, lower.tail = TRUE)
   
-  # Apply Benjamini-Hochberg correction
-  p_values_adj <- p.adjust(p_values, method = "BH")
+  # Extract coefficients
+  coefficients <- model_summary$coefficients[, "Value"]
   
-  # Add corrected p-values to the summary table
-  model_summary$coefficients <- cbind(model_summary$coefficients, "BH-Adjusted P-value" = p_values_adj)
-  
-  # Print the updated summary
-  print(model_summary$coefficients)
+  # Return a data frame with variable names, coefficients, direction of effect, and raw p-values
+  data.frame(Model = rep(dependent_var_name, length(p_values)),
+             Variable = names(p_values),
+             Coefficient = coefficients,
+             P_Value = p_values)
 }
 
-ord_regression(data$resources_usefulness_collaboration_networking) 
-ord_regression(data$resources_usefulness_financial) 
-ord_regression(data$resources_usefulness_finding_talent)
-ord_regression(resources_usefulness_grant_applications)
-ord_regression(resources_usefulness_professional_development)
-ord_regression(resources_usefulness_professional_mentorship)
-ord_regression(resources_usefulness_research_data_access)
-ord_regression(resources_usefulness_staff_well_being)
+# List of dependent variables
+dependent_vars <- c("resources_usefulness_collaboration_networking", 
+                    "resources_usefulness_financial", 
+                    "resources_usefulness_grant_applications", 
+                    "resources_usefulness_finding_talent", 
+                    "resources_usefulness_professional_development", 
+                    "resources_usefulness_professional_mentorship", 
+                    "resources_usefulness_research_data_access", 
+                    "resources_usefulness_staff_well_being")
+
+# Collect raw p-values from all models
+raw_p_values_list <- lapply(dependent_vars, function(var) ord_regression_raw_pvals(data[[var]], var, data))
+
+# Combine into a single data frame
+all_p_values <- do.call(rbind, raw_p_values_list)
+
+# Apply BH correction
+all_p_values$Adjusted_P_Value <- p.adjust(all_p_values$P_Value, method = "BH")
+
+# Print the results by model
+for (model_name in unique(all_p_values$Model)) {
+  cat("\nResults for Model:", model_name, "\n")
+  model_specific_values <- all_p_values[all_p_values$Model == model_name, ]
+  print(model_specific_values[, c("Variable", "Coefficient", "Adjusted_P_Value")])
+}
+
+# Function to summarize significant variables for each model
+summarize_significance <- function(model_results, alpha = 0.05) {
+  significant_vars <- model_results[model_results$Adjusted_P_Value < alpha, ]
+  
+  # Check and concatenate if there are any significant variables
+  if (nrow(significant_vars) > 0) {
+    significant_var_names <- paste(significant_vars$Variable, "(Coefficient =", significant_vars$Coefficient, ", Adjusted_P_Value =", significant_vars$Adjusted_P_Value, ")", collapse = ", ")
+    return(paste("Significant variables:", significant_var_names))
+  } else {
+    return("No significant variables")
+  }
+}
+
+# Apply the summary function to each model with alpha = 0.1 and print the results
+for (model_name in unique(all_p_values$Model)) {
+  cat("\nModel:", model_name, "\n")
+  model_results <- all_p_values[all_p_values$Model == model_name, ]
+  print(summarize_significance(model_results))
+}
+
+# 
+#Model: resources_usefulness_collaboration_networking 
+#[1] "Significant variables: animal_type_dogcat_meat_1 (Coefficient = -0.735440867981472 , Adjusted_P_Value = 0.0224167047069273 ), western_vs_nonwesternnon_western (Coefficient = 1.20045298872094 , Adjusted_P_Value = 0.0221539360172886 ), Not at all useful|Somewhat useful (Coefficient = -3.1612211365124 , Adjusted_P_Value = 5.69150368809397e-05 )"
+
+#Model: resources_usefulness_financial 
+#[1] "Significant variables: western_vs_nonwesternonline_only (Coefficient = 13.0958281953941 , Adjusted_P_Value = 0 ), Not at all useful|Somewhat useful (Coefficient = -3.75682441435989 , Adjusted_P_Value = 0.00230595861221305 )"
+
+#Model: resources_usefulness_grant_applications 
+#[1] "Significant variables: org_size_1 (Coefficient = 1.28139254823968 , Adjusted_P_Value = 0.0484537992444805 ), western_vs_nonwesternnon_western (Coefficient = 1.53323584405647 , Adjusted_P_Value = 0.0094879286896074 ), Not at all useful|Somewhat useful (Coefficient = -2.02145864020198 , Adjusted_P_Value = 0.0221539360172886 )"
+
+#Model: resources_usefulness_finding_talent 
+#[1] "No significant variables"
+
+#Model: resources_usefulness_professional_development 
+#[1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -1.53340701943197 , Adjusted_P_Value = 0.0224167047069273 )"
+
+#Model: resources_usefulness_professional_mentorship 
+#[1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -1.67445350244733 , Adjusted_P_Value = 0.0200345547854036 )"
+
+#Model: resources_usefulness_research_data_access 
+#[1] "Significant variables: western_vs_nonwesternnon_western (Coefficient = 1.37544019012757 , Adjusted_P_Value = 0.00675206467398131 ), Not at all useful|Somewhat useful (Coefficient = -2.49869697265079 , Adjusted_P_Value = 0.00478595915666338 )"
+
+#Model: resources_usefulness_staff_well_being 
+#[1] "Significant variables: western_vs_nonwesternnon_western (Coefficient = 1.3849355160355 , Adjusted_P_Value = 0.0035579101120737 ), Somewhat useful|Very useful (Coefficient = 1.43051440194563 , Adjusted_P_Value = 0.0347014909496168 )"
