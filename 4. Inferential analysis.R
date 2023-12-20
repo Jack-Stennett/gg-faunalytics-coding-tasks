@@ -1178,7 +1178,6 @@ for (model_name in unique(all_p_values$Model)) {
   print(summarize_significance(model_results))
 }
 
-
 #Model: resources_usefulness_collaboration_networking 
 #[1] "Significant variables: animal_type_dogcat_meat (Coefficient = 1.31244883525867 , Adjusted_P_Value = 0.037856943992837 ), western_vs_nonwestern.wecNon-Western (Coefficient = 0.401288526679952 , Adjusted_P_Value = 0.0336903744011252 ), Not at all useful|Somewhat useful (Coefficient = -2.67714152127538 , Adjusted_P_Value = 0.00000000000157502924180091 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.779134220335204 , Adjusted_P_Value = 0.0224516059586953 )"
 
