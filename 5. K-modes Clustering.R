@@ -46,14 +46,10 @@ load("data_recoded.RData")
 
 data <- recoded_data
 
-# Excluding response IDs that don't include key variables
+# Excluding 2 response IDs that don't include key variables (advocacy choices)
 
 response_ids_to_exclude <- c(
-  "R_3EllU9woEvkxURt", "R_2Y3AgCPoUsE1EM",
-  "R_2CuOci78cizOpNb", "R_1QFAa3zZtRFIPUs",
-  "R_2uZC1yXGZDzyPew", "R_3fqOI2RyoDaWu6LT",
-  "R_3foC4oz4yrYTzjl", "R_2PtXjvWeu84DdkI"
-)
+  "R_1QFAa3zZtRFIPUs", "R_2uZC1yXGZDzyPew")
 
 data <- data[!data$response_id %in% response_ids_to_exclude, ]
 
@@ -78,27 +74,19 @@ convert_to_2p <- function(x, type = "interest") {
   return(as.factor(recode_vector[x]))
 }
 
-factors_importance_cols <- grep('importance_', names(data), value = TRUE)
-obstacles_cols <- grep('obstacles_', names(data), value = TRUE)
-resources_cols <- grep('resources_', names(data), value = TRUE)
 interested_cols <- grep('interest_', names(data), value = TRUE)
-satisfied_cols <- grep('satisfaction_', names(data), value = TRUE)
 
-# Convert 'interest' and 'satisfaction' columns using convert_to_2p function
+# Convert 'interest' columns using convert_to_2p function
+
 for (column in interested_cols) {
   new_col <- sapply(data[[column]], convert_to_2p, type = "interest")
   data[paste(column, "2p", sep = "_")] <- factor(new_col, levels = c("Uninterested or Neutral", "Interested"), ordered = FALSE)
 }
 
-for (column in satisfied_cols) {
-  new_col <- sapply(data[[column]], convert_to_2p, type = "satisfaction")
-  data[paste(column, "2p", sep = "_")] <- factor(new_col, levels = c("Dissatisfied or Neutral", "Satisfied"), ordered = FALSE)
-}
-
 # Simpler process to create binary variables for org_years and org_size
 
-data$org_years_binary <- ifelse(data$org_years %in% c("Less than 2 years", "3-5 years"), "Under 5", "6+")
-data$org_size_binary <- ifelse(data$org_size %in% c("Less than 1", "1-5"), "Under 5", "6+")
+data$org_years_binary <- ifelse(data$org_years %in% c("Less than 2 years", "3-5 years"), "5 and under", "6+")
+data$org_size_binary <- ifelse(data$org_size %in% c("Less than 1", "1-5"), "5 and under", "6+")
 
 #Confirm levels
 
@@ -131,7 +119,8 @@ data$org_focus <- recode(data$org_focus,
 data$advocacy_types <- rowSums(data[, c("advocacy_type_corporate", "advocacy_type_policy", "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", "advocacy_type_other")] > 0)
 data$animal_types <- rowSums(data[, c("animal_type_dogcat_meat", "animal_type_companion", "animal_type_other", "animal_type_wild", "animal_type_lab", "animal_type_captive", "animal_type_aquatic_farm", "animal_type_land_farm")] > 0)
 
-# List of countries by continent
+# List of countries by continent - we need this variable in order to better arrange timezones for focus groups in the later stage of research 
+
 asia_countries <- c("Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Bhutan", "Brunei", "Cambodia", 
                     "China", "Cyprus", "Georgia", "Hong Kong SAR", "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan", 
                     "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Malaysia", "Maldives", "Mongolia", "Myanmar", 
@@ -225,11 +214,11 @@ data[cols_with_na] <- lapply(data[cols_with_na], function(x) {
 # List of variables to include in the K-modes clustering (both profiling and segmentation)
 
 variables_to_include <- c(
-  "org_years", "org_mission", "continent", "advocacy_type_corporate", "advocacy_type_policy", 
+  "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
   "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
   "advocacy_type_other", "importance_funding_availability", "importance_talent_availability",
   "importance_context_appropriateness", "importance_impact_cost_effectiveness",
-  "importance_mission_alignment"
+  "importance_mission_alignment", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
 )
 
 # Remove rows with any missing values in the specified columns
@@ -241,7 +230,127 @@ cleaned_data_standard <- as.data.frame(cleaned_data)
 # Define the maximum number of clusters to consider
 max_clusters <- 10
 
-# We use an iterative process to reduce the number of variables
+# Initialize vectors to store the averages of each iteration
+average_withindiffs <- numeric(21)
+
+# Run K-modes clustering for different seeds and collect averages
+for (i in 0:20) {
+  set.seed(i)
+  kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+  
+  # Calculate the average withindiff for the current iteration
+  average_withindiff <- mean(kmodes_result$withindiff)
+  average_withindiffs[i + 1] <- average_withindiff
+  
+  print(paste("For seed ", i))
+  print(kmodes_result)
+  
+  # Print the results for the current iteration
+  print(paste("For seed", i, "- Average withindiff:", average_withindiff))
+}
+
+# Calculate the overall average of the withindiffs 
+overall_average_withindiff <- mean(average_withindiffs)
+
+# Print the overall averages
+print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
+
+# Observing these results, we see that there is very high variance, and within cluster simple matching distance is high ( 
+# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004"). The importance variables
+# are particularly uncorrelated across iterations so I will run again removing the importance variables
+
+variables_to_include <- c(
+  "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
+  "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
+  "advocacy_type_other", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
+)
+
+# Remove rows with any missing values in the specified columns
+cleaned_data <- na.omit(data[, variables_to_include])
+
+# Convert cleaned_data to a standard data frame
+cleaned_data_standard <- as.data.frame(cleaned_data)
+
+# Define the maximum number of clusters to consider
+max_clusters <- 10
+
+# Initialize vectors to store the averages of each iteration
+average_withindiffs <- numeric(21)
+
+# Run K-modes clustering for different seeds and collect averages
+for (i in 0:20) {
+  set.seed(i)
+  kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+  
+  # Calculate the average withindiff for the current iteration
+  average_withindiff <- mean(kmodes_result$withindiff)
+  average_withindiffs[i + 1] <- average_withindiff
+  
+  print(paste("For seed ", i))
+  print(kmodes_result)
+  
+  # Print the results for the current iteration
+  print(paste("For seed", i, "- Average withindiff:", average_withindiff))
+}
+
+# Calculate the overall average of the withindiffs and cluster sizes
+overall_average_withindiff <- mean(average_withindiffs)
+
+# Print the overall averages
+print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
+
+# The results from this iteration show that there are multiple possible clusters based on different random seeds, 
+# with high within cluster simple matching ("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 7.93755552558182")
+# but that it is common for certain correlated variables (advocacy_types)  
+# to form similar clusters. The next step we can remove org_mission, org_size and org_years, as they don't seem to show strong correlations
+# (the mode is often identical for all three clusters, indicating that segmentation is not occurring based on this variable).
+# Clusters are also often very large or very small.
+
+variables_to_include <- c(
+  "advocacy_type_corporate", "advocacy_type_policy", 
+  "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
+  "advocacy_type_other", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
+)
+
+# Remove rows with any missing values in the specified columns
+cleaned_data <- na.omit(data[, variables_to_include])
+
+# Convert cleaned_data to a standard data frame
+cleaned_data_standard <- as.data.frame(cleaned_data)
+
+# Define the maximum number of clusters to consider
+max_clusters <- 10
+
+average_withindiffs <- numeric(21)
+
+# Run K-modes clustering for different seeds and collect averages
+for (i in 0:20) {
+  set.seed(i)
+  kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+  
+  # Calculate the average withindiff for the current iteration
+  average_withindiff <- mean(kmodes_result$withindiff)
+  average_withindiffs[i + 1] <- average_withindiff
+  
+  print(paste("For seed ", i))
+  print(kmodes_result)
+  
+  # Print the results for the current iteration
+  print(paste("For seed", i, "- Average withindiff:", average_withindiff))
+}
+
+# Calculate the overall average of the withindiffs and cluster sizes
+overall_average_withindiff <- mean(average_withindiffs)
+
+# Print the overall averages
+print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
+
+# This clustering is much better. Cluster sizes are generally similar, and Within cluster simple-matching distance by cluster
+# has dropped to an average of [1] "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 5.81854986495894".
+# A clear pattern is starting to emerge: there are groups that are more likely to conduct corporate, policy 
+# and institutional advocacy, and these are all correlated. There are also groups that are interested or uninterested in these types of advocacy
+# This is both a robust effect and aligns with the clustering needed for the RQs. However, some variables don't show signs of being used in this process
+# , potentially raising the imprecision of the clustering. Therefore I'll remove advocacy_type_direct_work, advocacy_type_other, interest_diet_2p and interest_direct_2p 
 
   variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
     "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
@@ -258,20 +367,34 @@ max_clusters <- 10
   # Convert cleaned_data to a standard data frame
   cleaned_data_standard <- as.data.frame(cleaned_data)
   
-  # As the K-modes algorithm needs a random seed, we test with multiple different seeds to determine the variation in 
-  # outcomes. What we're looking for is outcomes with low variance, low and consistent within-cluster simple matching and 
-  # correlations among categories. 
-  
+  # Run K-modes clustering for different seeds and collect averages
   for (i in 0:20) {
     set.seed(i)
-    # Run K-modes clustering on the standard data frame
     kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+    
+    # Calculate the average withindiff for the current iteration
+    average_withindiff <- mean(kmodes_result$withindiff)
+    average_withindiffs[i + 1] <- average_withindiff
+    
     print(paste("For seed ", i))
     print(kmodes_result)
-  
+    
+    # Print the results for the current iteration
+    print(paste("For seed", i, "- Average withindiff:", average_withindiff))
   }
-
-#   [1] "For seed  1"
+  
+  # Calculate the overall average of the withindiffs and cluster sizes
+  overall_average_withindiff <- mean(average_withindiffs)
+  
+  # Print the overall averages
+  print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
+  
+# This now gives the most  stable set of clusters. 12/21 iterations give identical clusters, and they have low average within-cluster differences.  
+# Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 3.07114936960419"
+  
+# Printing results here: 
+#  
+#  [1] "For seed  1"
 #   K-modes clustering with 3 clusters of sizes 52, 86, 72
   
 #  Cluster modes:
@@ -287,12 +410,14 @@ max_clusters <- 10
 # 
 #  Within cluster simple-matching distance by cluster:
 #    [1] 1.988610 3.492529 3.127797
-
+  
 # The outcomes of this clustering are clear. There is a clustering where: 1) The majority of cluster one conducts fewer advocacy types
 # and is uninterested in pursuing these types of advocacy. 2) The majority of cluster 2 conducts these four types of advocacy and 
 # is therefore uninterested in pursuing other types. 3) The majority of cluster 3 conducts fewer advocacy types, but is interested in 
 # pursuing other advocacy types. 
-    
+
+# Here I set the seed to 1 and run again, storing this as the cluster variable. 
+  
 set.seed(1)  
 kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
 print(paste("For seed ", 1))
@@ -398,13 +523,18 @@ avg_sil_score <- mean(silhouette_scores[, "sil_width"])
 print(paste("Average Silhouette Score:", avg_sil_score))
 
 #[1] "Average Silhouette Score: 0.328840676362168"
-# This indicates that clusters are somewhat distinct. (A value between 0.25 and 0.5 is considered weakly distinct, 1 would be perfect.)
+# This indicates that clusters are somewhat distinct. (Perfectly-clustered elements have a score of 1, while 
+# poorly-clustered elements have a score near -1. （https://search.r-project.org/CRAN/refmans/bios2mds/html/sil.score.html） 
+# A value between 0.25 and 0.65 is considered weakly distinct (Lovmar et al, 2005 : doi:10.1186/1471-2164-6-35)
 
 # Plot silhouette scores 
 plot(silhouette_scores, col = 1:max(clusters), border = NA)
 
+# Interpretation: （https://search.r-project.org/CRAN/refmans/bios2mds/html/sil.score.html）
+# Values close to +1 indicate that the data point is well matched to its own cluster; and poorly matched to neighboring clusters. 
+# Values near 0 suggest the data point is on the border or in between clusters.
+# Values close to -1 suggest the data point would be better placed in a neighboring cluster.
 # As almost all values are positive, the vast majority of responses are in the correct cluster.
-
 
 ######
 # Stage 3 : Visualising and testing Profiling Variables
@@ -451,17 +581,34 @@ plot(silhouette_scores, col = 1:max(clusters), border = NA)
       print(table_output)
     }
   }
-  
+
+# Define the directory where plots will be saved
+plots_dir <- "C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs/plots/"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(plots_dir)) {
+  dir.create(plots_dir, recursive = TRUE)
+  print(paste("Created directory:", plots_dir))
+}
     
 # Loop through each variable to create frequency tables and plots for each cluster
 for (var in selected_variables) {
   # Create a contingency table of counts
   table_counts <- table(data[[var]], data$cluster)
   
-  # Create a dataframe with the counts for plotting
+  # Create a data frame with the counts for plotting
   df_for_counts <- as.data.frame.matrix(table_counts)
   df_for_counts$variable <- row.names(df_for_counts)
   df_for_counts <- pivot_longer(df_for_counts, cols = c('1', '2', '3'), names_to = 'cluster', values_to = 'count')
+  
+  # Confirm that the dataframe is in the correct format
+  print(str(df_for_counts))
+  
+  # Check if the dataframe is created correctly
+  if (is.null(df_for_counts) || nrow(df_for_counts) == 0) {
+    warning(paste("Failed to create dataframe for variable:", var))
+    next # Skip this iteration if dataframe creation failed
+  }
   
   # Add cluster sizes for labeling
   cluster_sizes <- colSums(table_counts)
