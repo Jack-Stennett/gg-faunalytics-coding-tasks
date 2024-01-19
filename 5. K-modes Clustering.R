@@ -213,8 +213,11 @@ data[cols_with_na] <- lapply(data[cols_with_na], function(x) {
 
 # This section details the iterative process employed for K-modes clustering to construct statistically 
 # valid clusters relevant to our analysis. The process integrates statistical methods with practical usefulness 
-# concerns regarding the clusters. 
-
+# concerns regarding the clusters. I measure the within-cluster sum of differences (WithinDiff) metric at each 
+# stage to test validity-  A lower withindiff value indicates that the objects in a cluster are more similar to 
+# each other, suggesting a more cohesive and well-defined cluster. However, there is no clear threshold at 
+# which WithinDiff is relevant, therefore I also check that the size of the clusters are relatively even, 
+# to avoid overfitting, and that there are distinct and relevant differences between the modes. 
 
 # List of variables to include in the K-modes clustering (both profiling and segmentation)
 
@@ -264,8 +267,8 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # Variable Selection and Refinement
 
 # Observing these results, we see that there is very high variance, and within cluster simple matching distance is high ( 
-# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004"). We noted that, for the importance variables
-# the modal value (visible from K-modes results) is almost always "very important", therefore
+# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004") and highly variable. 
+# We noted that, for the importance variables  the modal value (visible from K-modes results) is almost always "very important", therefore
 # there may be insufficient variation for these variables to provide value to the cluster.No particular statistical tests were performed to come to this conclusion, 
 # but we had identified in a previous part of the study that these importance variables were generally not significantly correlated with other 
 # factors. Below, you can see the same algorithm applied without these importance variables.
@@ -447,10 +450,8 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
   # Print the overall averages
   print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
-  
 # This now gives the most stable set of clusters. 12/21 iterations give identical clusters, and they have low average within-cluster differences.  
 # Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 3.07114936960419"
-
 
   variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
     "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
