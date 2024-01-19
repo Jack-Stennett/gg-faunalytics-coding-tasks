@@ -211,6 +211,11 @@ data[cols_with_na] <- lapply(data[cols_with_na], function(x) {
 # K-modes clustering analysis
 # -----------------------------
 
+# This section details the iterative process employed for K-modes clustering to construct statistically 
+# valid clusters relevant to our analysis. The process integrates statistical methods with practical usefulness 
+# concerns regarding the clusters. 
+
+
 # List of variables to include in the K-modes clustering (both profiling and segmentation)
 
 variables_to_include <- c(
@@ -255,9 +260,15 @@ overall_average_withindiff <- mean(average_withindiffs)
 # Print the overall averages
 print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
+
+# Variable Selection and Refinement
+
 # Observing these results, we see that there is very high variance, and within cluster simple matching distance is high ( 
-# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004"). The importance variables
-# are particularly uncorrelated across iterations so I will run again removing the importance variables
+# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004"). We noted that, for the importance variables
+# the modal value (visible from K-modes results) is almost always "very important", therefore
+# there may be insufficient variation for these variables to provide value to the cluster.No particular statistical tests were performed to come to this conclusion, 
+# but we had identified in a previous part of the study that these importance variables were generally not significantly correlated with other 
+# factors. Below, you can see the same algorithm applied without these importance variables.
 
 variables_to_include <- c(
   "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
@@ -299,16 +310,61 @@ overall_average_withindiff <- mean(average_withindiffs)
 # Print the overall averages
 print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
-# The results from this iteration show that there are multiple possible clusters based on different random seeds, 
-# with high within cluster simple matching ("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 7.93755552558182")
-# but that it is common for certain correlated variables (advocacy_types)  
-# to form similar clusters. The next step we can remove org_mission, org_size and org_years, as they don't seem to show strong correlations
-# (the mode is often identical for all three clusters, indicating that segmentation is not occurring based on this variable).
-# Clusters are also often very large or very small.
+# Following the refinement of our variable set, the clustering results still indicated variability across 
+# different seeds, with a moderately high average within-cluster sum of differences (Withindiff) of 7.94. 
+# A notable observation was the tendency for certain 'advocacy_type' variables to consistently cluster together. 
+# To quantitatively assess the extent of correlation among these variables, and to explore their potential 
+# in enhancing the depth of our clusters, we performed chi-squared tests, using a p-value of 0.01 to identify 
+# Less strongly correlated variables.
+
+# Initialize a matrix to store p-values
+p_value_matrix <- matrix(NA, nrow = length(variables_to_include), ncol = length(variables_to_include),
+                         dimnames = list(variables_to_include, variables_to_include))
+
+# Loop through each pair of variables and perform chi-squared test
+for (i in 1:length(variables_to_include)) {
+  for (j in 1:length(variables_to_include)) {
+    if (i != j) {
+      # Create a contingency table
+      contingency_table <- table(data[[variables_to_include[i]]], data[[variables_to_include[j]]])
+      
+      # Perform the chi-squared test and store the p-value
+      test_result <- try(chisq.test(contingency_table), silent = TRUE)
+      if (class(test_result) != "try-error") {
+        p_value_matrix[i, j] <- test_result$p.value
+      } else {
+        p_value_matrix[i, j] <- NA  # Assign NA if the test fails (e.g., due to zero counts)
+      }
+    }
+  }
+}
+
+# Count the number of significant correlations for each variable
+significant_correlation_counts <- apply(p_value_matrix, 1, function(row) {
+  sum(row < 0.01, na.rm = TRUE)
+})
+
+# Print the count of significant correlations for each variable
+significant_correlation_counts
+
+#org_size_binary              org_years_binary                   org_mission 
+#6                             0                             2 
+#advocacy_type_corporate          advocacy_type_policy   advocacy_type_institutional 
+#6                             6                             8 
+#advocacy_type_direct_work advocacy_type_individual_diet           advocacy_type_other 
+#2                             6                             5 
+#interest_policy_2p              interest_corp_2p              interest_inst_2p 
+#8                             8                             9 
+#interest_diet_2p            interest_direct_2p 
+#7                             5 
+
+# We will proceed with the refined set of variables, excluding those with lower correlation counts. This step 
+# aims to focus on variables that contribute more significantly to the clustering process, thereby improving 
+# the clarity and utility of the resulting clusters.
 
 variables_to_include <- c(
-  "advocacy_type_corporate", "advocacy_type_policy", 
-  "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
+  "org_size_binary", "advocacy_type_corporate", "advocacy_type_policy", 
+  "advocacy_type_institutional", "advocacy_type_individual_diet", 
   "advocacy_type_other", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
 )
 
@@ -346,11 +402,55 @@ overall_average_withindiff <- mean(average_withindiffs)
 print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
 # This clustering is much better. Cluster sizes are generally similar, and Within cluster simple-matching distance by cluster
-# has dropped to an average of [1] "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 5.81854986495894".
+# has dropped to an average of [1] "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 5.74221105455453".
 # A clear pattern is starting to emerge: there are groups that are more likely to conduct corporate, policy 
-# and institutional advocacy, and these are all correlated. There are also groups that are interested or uninterested in these types of advocacy
-# This is both a robust effect and aligns with the clustering needed for the RQs. However, some variables don't show signs of being used in this process
-# , potentially raising the imprecision of the clustering. Therefore I'll remove advocacy_type_direct_work, advocacy_type_other, interest_diet_2p and interest_direct_2p 
+# and institutional advocacy, and these are all correlated. Among groups who don't perform these, there are also groups that are 
+# interested or uninterested in these types of advocacy.
+# This is both a consistent effect across different random seeds, and aligns with the clustering needed for the RQs. 
+# However, some variables don't show signs of being used in this process, potentially raising the imprecision of the 
+# clustering. Therefore we'll remove org_size_binary, advocacy_type_other, interest_diet_2p and interest_direct_2p. 
+
+  variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
+    "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
+  
+  # Add a temporary identifier to match the rows before removing NAs
+  data$id <- seq_len(nrow(data))
+  
+  # Keep only the variables we want to include for K-modes
+  cleaned_data <- data[, c(variables_to_include, "id")]
+  
+  # Remove rows with any missing values in the specified columns
+  cleaned_data <- na.omit(cleaned_data)
+  
+  # Convert cleaned_data to a standard data frame
+  cleaned_data_standard <- as.data.frame(cleaned_data)
+  
+  # Run K-modes clustering for different seeds and collect averages
+  for (i in 0:20) {
+    set.seed(i)
+    kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+    
+    # Calculate the average withindiff for the current iteration
+    average_withindiff <- mean(kmodes_result$withindiff)
+    average_withindiffs[i + 1] <- average_withindiff
+    
+    print(paste("For seed ", i))
+    print(kmodes_result)
+    
+    # Print the results for the current iteration
+    print(paste("For seed", i, "- Average withindiff:", average_withindiff))
+  }
+  
+  # Calculate the overall average of the withindiffs and cluster sizes
+  overall_average_withindiff <- mean(average_withindiffs)
+  
+  # Print the overall averages
+  print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
+
+  
+# This now gives the most stable set of clusters. 12/21 iterations give identical clusters, and they have low average within-cluster differences.  
+# Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 3.07114936960419"
+
 
   variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
     "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
@@ -389,9 +489,6 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
   # Print the overall averages
   print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
   
-# This now gives the most  stable set of clusters. 12/21 iterations give identical clusters, and they have low average within-cluster differences.  
-# Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 3.07114936960419"
-  
 # Printing results here: 
 #  
 #  [1] "For seed  1"
@@ -417,7 +514,7 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # pursuing other advocacy types. 
 
 # Here I set the seed to 1 and run again, storing this as the cluster variable. 
-  
+
 set.seed(1)  
 kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
 print(paste("For seed ", 1))
