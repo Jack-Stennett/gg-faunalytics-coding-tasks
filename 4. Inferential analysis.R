@@ -1256,34 +1256,27 @@ for (model_name in unique(all_results_combined$Model)) {
   print(summarize_significance(model_results))
 }
 
+
 # Model: resources_usefulness_collaboration_networking 
-# [1] "Significant variables: animal_type_dogcat_meat (Coefficient = 1.25907116527568 , Adjusted_P_Value = 0.0468170888104062 ), 
-#western_vs_nonwestern.wecNon-Western (Coefficient = 0.366412597030269 , Adjusted_P_Value = 0.0468170888104062 ), Not at all useful|Somewhat useful (Coefficient = -2.36935630446678 , Adjusted_P_Value = 0.000000147649499521449 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.700860784522244 , Adjusted_P_Value = 0.0468170888104062 )"
+# [1] "Significant variables: animal_type_dogcat_meat (Coefficient = 1.25907116527568 , Adjusted_P_Value = 0.0468170888104062 ), western_vs_nonwestern.wecNon-Western (Coefficient = 0.366412597030269 , Adjusted_P_Value = 0.0468170888104062 ), Not at all useful|Somewhat useful (Coefficient = -2.36935630446678 , Adjusted_P_Value = 0.000000147649499521449 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.700860784522244 , Adjusted_P_Value = 0.0468170888104062 )"
 # 
 # Model: resources_usefulness_financial 
-# [1] "Significant variables: animal_type_land_farm (Coefficient = 2.1140392283629 , Adjusted_P_Value = 0.0380166912501334 ), 
-# Not at all useful|Somewhat useful (Coefficient = -2.5569407965576 , Adjusted_P_Value = 0.0255817181133129 )"
+# [1] "Significant variables: animal_type_land_farm (Coefficient = 2.11614389921878 , Adjusted_P_Value = 0.0355642935078708 ), Not at all useful|Somewhat useful (Coefficient = -2.53920171727137 , Adjusted_P_Value = 0.0280922916658641 )"
 # 
 # Model: resources_usefulness_grant_applications 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.363124961094031 , Adjusted_P_Value = 0.0534752827307895 ), Not at all useful|Somewhat useful (Coefficient = -2.92299965218305 , Adjusted_P_Value = 0.0000000000000119307055744785 ), 
-# Somewhat useful|Very useful (Coefficient = -1.01346266496444 , Adjusted_P_Value = 0.00000273369804257843 )"
+# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -2.90040348460943 , Adjusted_P_Value = 0.00000000582054060625623 )"
 # 
 # Model: resources_usefulness_finding_talent 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.282336738080037 , Adjusted_P_Value = 0.084046167294701 ), 
-# Not at all useful|Somewhat useful (Coefficient = -1.9021444603648 , Adjusted_P_Value = 0.0000000000000165616265612924 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.536672739506232 , Adjusted_P_Value = 0.0963916615489959 )"
+# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -1.9021444603648 , Adjusted_P_Value = 0.0000000000000165616265612924 )"
 # 
 # Model: resources_usefulness_professional_development 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.271669005700527 , Adjusted_P_Value = 0.0964735307704652 ), 
-# org_focus.wecDiet Outreach (Coefficient = 0.5479472253278 , Adjusted_P_Value = 0.0506441298237117 ), Not at all useful|Somewhat useful (Coefficient = -1.90980159255618 , Adjusted_P_Value = 0.00000000000113949982923419 )"
+# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.293665356505189 , Adjusted_P_Value = 0.0493828632613771 ), org_focus.wecDiet Outreach (Coefficient = 0.55900540862333 , Adjusted_P_Value = 0.0388604585559778 ), Not at all useful|Somewhat useful (Coefficient = -2.01469114796903 , Adjusted_P_Value = 0.00000000000000391184267382671 )"
 # 
 # Model: resources_usefulness_professional_mentorship 
-# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -2.1675133382483 , Adjusted_P_Value = 0.00000194899779299808 )"
+# [1] "No significant variables"
 # 
 # Model: resources_usefulness_research_data_access 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.417231961127309 , Adjusted_P_Value = 0.0205308183375799 ), 
-#Not at all useful|Somewhat useful (Coefficient = -2.866083665572 , Adjusted_P_Value = 0.000000000000141329443166326 ), 
-# western_vs_nonwestern.wec_bWestern (Coefficient = -0.930343466547159 , Adjusted_P_Value = 0.00647125684270975 )"
+# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.417231961127309 , Adjusted_P_Value = 0.0205308183375799 ), Not at all useful|Somewhat useful (Coefficient = -2.866083665572 , Adjusted_P_Value = 0.000000000000141329443166326 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.930343466547159 , Adjusted_P_Value = 0.00647125684270975 )"
 # 
 # Model: resources_usefulness_staff_well_being 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.451595814644737 , Adjusted_P_Value = 0.00137642580145583 ), 
-# western_vs_nonwestern.wec_bWestern (Coefficient = -0.950663031275859 , Adjusted_P_Value = 0.00137642580145583 )"
+# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.451595814644737 , Adjusted_P_Value = 0.00137642580145583 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.950663031275859 , Adjusted_P_Value = 0.00137642580145583 )"

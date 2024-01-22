@@ -218,11 +218,17 @@ data[cols_with_na] <- lapply(data[cols_with_na], function(x) {
 
 # This section details the iterative process employed for K-modes clustering to construct statistically 
 # valid clusters relevant to our analysis. The process integrates statistical methods with practical usefulness 
-# concerns regarding the clusters. I measure the within-cluster sum of differences (WithinDiff) metric at each 
-# stage to test validity-  A lower withindiff value indicates that the objects in a cluster are more similar to 
+# concerns regarding the clusters. 
+
+# We measure the within-cluster sum of differences (WithinDiff) metric at each stage to test validity.  
+# A lower withindiff value indicates that the objects in a cluster are more similar to 
 # each other, suggesting a more cohesive and well-defined cluster. However, there is no clear threshold at 
-# which WithinDiff is relevant, therefore I also check that the size of the clusters are relatively even, 
+# which WithinDiff is relevant, therefore I also manually check that the sizes of the clusters are relatively even, 
 # to avoid overfitting, and that there are distinct and relevant differences between the modes of each cluster. 
+
+# In the pre-reg we suggested various organization characteristics (factors considered (importance_), 
+# age of organization, philosophy/ mission, animal focus, and advocacy approaches) as segmentation variables.
+# We add these examples and size of organisation (org_size) and interest in given advocacy approaches (interest..._2p).
 
 # List of variables to include in the K-modes clustering (both profiling and segmentation)
 
@@ -230,7 +236,7 @@ variables_to_include <- c(
   "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
   "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
   "advocacy_type_other", "importance_funding_availability", "importance_talent_availability",
-  "importance_context_appropriateness", "importance_impact_cost_effectiveness",
+  "importance_context_appropriateness", "importance_impact_cost_effectiveness", "animal_type_dogcat_meat", "animal_type_land_farm", "animal_type_aquatic_farm",
   "importance_mission_alignment", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
 )
 
@@ -238,6 +244,9 @@ variables_to_include <- c(
 cleaned_data <- na.omit(data[, variables_to_include])
 
 # Convert cleaned_data to a standard data frame
+# (Note: Converting 'cleaned_data' to a standard data frame with 'as.data.frame' seems to resolve column indexing issues.
+# This step appears necessary to prevent errors related to column subsetting in subsequent analysis steps.
+# It ensures that column references are correctly aligned with the reduced dataset after removing NAs.)
 cleaned_data_standard <- as.data.frame(cleaned_data)
 
 # Define the maximum number of clusters to consider
@@ -249,7 +258,7 @@ average_withindiffs <- numeric(21) #21 different alternative random seeds from 0
 # Run K-modes clustering for different seeds and collect averages
 for (i in 0:20) {
   set.seed(i)
-  kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
+  kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)# This sets the initial number of clusters to 3, max iterations to 100, and multiple starting configurations to 100.
   
   # Calculate the average withindiff for the current iteration
   average_withindiff <- mean(kmodes_result$withindiff)
@@ -280,7 +289,7 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 
 variables_to_include <- c(
   "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
-  "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", 
+  "advocacy_type_institutional", "advocacy_type_direct_work", "advocacy_type_individual_diet", "animal_type_dogcat_meat", "animal_type_land_farm", "animal_type_aquatic_farm",
   "advocacy_type_other", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p" 
 )
 
@@ -319,7 +328,7 @@ overall_average_withindiff <- mean(average_withindiffs)
 print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
 # Following the refinement of our variable set, the clustering results still indicated variability across 
-# different seeds, with a moderately high average within-cluster sum of differences (Withindiff) of 7.94. 
+# different seeds, with a moderately high average within-cluster sum of differences (Withindiff) of 9.36. 
 # A notable observation was the tendency for certain 'advocacy_type' variables to consistently cluster together. 
 # To quantitatively assess the extent of correlation among these variables, and to explore their potential 
 # in enhancing the depth of our clusters, we performed chi-squared tests, using a p-value of 0.01 to identify 
@@ -355,16 +364,18 @@ significant_correlation_counts <- apply(p_value_matrix, 1, function(row) {
 # Print the count of significant correlations for each variable
 significant_correlation_counts
 
-#org_size_binary              org_years_binary                   org_mission 
-#6                             0                             2 
-#advocacy_type_corporate          advocacy_type_policy   advocacy_type_institutional 
-#6                             6                             8 
-#advocacy_type_direct_work advocacy_type_individual_diet           advocacy_type_other 
-#2                             6                             5 
-#interest_policy_2p              interest_corp_2p              interest_inst_2p 
-#8                             8                             9 
-#interest_diet_2p            interest_direct_2p 
-#7                             5 
+# org_size_binary              org_years_binary                   org_mission 
+# 6                             0                             3 
+# advocacy_type_corporate          advocacy_type_policy   advocacy_type_institutional 
+# 6                             6                             9 
+# advocacy_type_direct_work advocacy_type_individual_diet       animal_type_dogcat_meat 
+# 3                             6                             2 
+# animal_type_land_farm      animal_type_aquatic_farm           advocacy_type_other 
+# 1                             4                             6 
+# interest_policy_2p              interest_corp_2p              interest_inst_2p 
+# 8                             8                             9 
+# interest_diet_2p            interest_direct_2p 
+# 7                             6 
 
 # We will proceed with the refined set of variables, excluding those with lower correlation counts. This step 
 # aims to focus on variables that contribute more significantly to the clustering process, thereby improving 
@@ -410,11 +421,11 @@ overall_average_withindiff <- mean(average_withindiffs)
 print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
 
 # This clustering is much better. Cluster sizes are generally similar, and Within cluster simple-matching distance by cluster
-# has dropped to an average of [1] "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 5.74221105455453".
-# A clear pattern is starting to emerge: there are groups that are more likely to conduct corporate, policy 
-# and institutional advocacy, and these are all correlated. Among groups who don't perform these, there are also groups that are 
-# interested or uninterested in these types of advocacy.
-# This is both a consistent effect across different random seeds, and aligns with the clustering needed for the RQs. 
+# has dropped to an average of 5.74. Looking at the data in more detail, a clear pattern is starting to emerge: 
+# there are groups that are more likely to conduct corporate, policy and institutional advocacy, and these are
+# all positively correlated (a group that conducts one of these advocacy types is more likely to conduct another)
+# Among groups who don't conduct these advocacy types, there are groups that are interested or uninterested in these types of advocacy.
+# This appears to be both a consistent effect across different random seeds, and aligns with the clustering needed to answer the RQs. 
 # However, some variables don't show signs of being used in this process, potentially raising the imprecision of the 
 # clustering. Therefore we'll remove org_size_binary, advocacy_type_other, interest_diet_2p and interest_direct_2p. 
 
@@ -585,10 +596,13 @@ file_path <- "C:/Users/jack_/Desktop/clustered_data.csv"
 ######
 
 #As the Rand Index (mentioned in pre-reg) is unsuitable for the variables we have chosen in this K-modes clustering, 
-# we can use the Within Cluster sum of squares and the silhouette score to test the validity of clusters. 
+# because the variables are all categorical, we can use the Within Cluster sum of differences and the silhouette score to test the validity of clusters. 
+# This paper (Salem et al, 2021) illustrates how you can use silhouette scores to validate clustering https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7998089/
+# The original paper on K modes clustering (Huang 1997) illustrates how we can use within cluster sum of difference to 
+# validate clustering Huang, Z. (1997) A Fast Clustering Algorithm to Cluster Very Large Categorical Data Sets in Data Mining. in KDD: Techniques and Applications (H. Lu, H. Motoda and H. Luu, Eds.), pp. 21-34, World Scientific, Singapore.
 
 # Prepare a vector to hold the total within-cluster sums of differences for each k
-wss <- numeric(max_clusters)
+wsd <- numeric(max_clusters)
 
 # Calculate total within-cluster sums of differences for k from 1 to max_clusters
 for (k in 1:max_clusters) {
@@ -598,7 +612,7 @@ for (k in 1:max_clusters) {
   # Check the structure of km to ensure it's as expected
   if(!is.null(km$withindiff)) {
     # Sum up the within-cluster differences for all clusters
-    wss[k] <- sum(km$withindiff)
+    wsd[k] <- sum(km$withindiff)
   } else {
     warning(paste("No withindiff for k =", k))
   }
@@ -606,9 +620,9 @@ for (k in 1:max_clusters) {
 
 # We use this plot to visually determine the 'elbow point' where the rate of decrease sharply changes
 
-plot(1:max_clusters, wss, type = "b", xlab = "Number of clusters", ylab = "Total within-cluster sum of differences", main = "Elbow Method for Determining Optimal K")
+plot(1:max_clusters, wsd, type = "b", xlab = "Number of clusters", ylab = "Total within-cluster sum of differences", main = "Elbow Method for Determining Optimal K")
 
-# This suggests that three is the optimal number of clusters
+# This suggests that three is the optimal number of clusters, as it forms the smallest angle on the chart
 
 # Extract the cluster assignments from the K-modes result
 clusters <- kmodes_result$cluster
