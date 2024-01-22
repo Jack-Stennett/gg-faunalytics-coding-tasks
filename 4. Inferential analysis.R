@@ -763,6 +763,7 @@ model_2_combined_stats <- final_model_results %>%
 
 final_model_3 <- glm(advocacy_type_direct_work ~  
                  animal_type_aquatic_farm +
+                 animal_type_dogcat_meat +
                  importance_funding_availability +
                  importance_talent_availability +
                  importance_context_appropriateness +
@@ -771,7 +772,6 @@ final_model_3 <- glm(advocacy_type_direct_work ~
                family = binomial, data = data)
 
 summary(final_model_3)
-
 
 final_model_4 <- glm(advocacy_type_institutional ~  
                  importance_funding_availability +
@@ -817,7 +817,7 @@ extract_model_stats <- function(model) {
   return(model_stats)
 }
 
-# Applying the function to models
+# Applying the function to models (p-value adjustment will be done separately for model_2)
 model_1_stats <- extract_model_stats(final_model_1)
 model_3_stats <- extract_model_stats(final_model_3)
 model_4_stats <- extract_model_stats(final_model_4)
@@ -830,8 +830,7 @@ print(model_3_stats)
 print(model_4_stats)
 print(model_5_stats)
 
-#Final Model 1: Importance talent availability/ somewhat important is the only significant variable (p = 0.003306523), (Estimate : 1.3289), indicating that talent constraints are less of
-# an obstacle for those organisations pursuing corporate advocacy.
+#Final Model 1: No significant variables
 
 # Final Model 2: Only org_mission welfare  (p = 0.0005104452), (Estimate : -2.02024) and org_mission_rights  (p = 0.0032542726), (Estimate : 0.85694063)remains significant after adjustment- 
 # organisations with a welfare-oriented mission are significantly less likely to engage in 
@@ -843,9 +842,7 @@ print(model_5_stats)
 
 # Final Model 4: Nothing is significant
 
-# Final Model 5: Nothing is significant. However, the importance of talent availability (Estimate: 0.91392), and impact/ cost effectiveness (Estimate: -1.12948) are both close to statistical significance 
-# but drop below the significance threshold after adjustment(p = 0.08679926). This indicates that groups working on policy are potentially more likely to care about cost effectiveness, and less about the  
-# availability of talent, but that further analysis needs to be conducted to test this hypothesis.
+# Final Model 5: Nothing is significant. 
 
 ############
 ## RQ3: How useful are different resources? 
@@ -976,6 +973,7 @@ dependent_vars <- c("resources_usefulness_collaboration_networking",
                     "resources_usefulness_research_data_access", 
                     "resources_usefulness_staff_well_being")
 
+# org_budget needs to be adjusted to avoid a model error
 # Calculate the mean of 'org_budget_usd_standardized', excluding NA values
 mean_budget <- mean(data$org_budget_usd_standardized, na.rm = TRUE)
 
@@ -1001,7 +999,7 @@ str(data$org_budget_usd_standardized)
 
 # Adding stage to remove non-significant variables. The regression fails to function with too many variables, so I use a step-wise approach
 # I run an version with the maximal number of variables (excluding org_mission.wec and org_focus.wec), then remove those that do not come close to statistical significance (p = 0.2). 
-# Then I add org_mission.wec and org_focus.wec. 
+# Then I add org_mission.wec and org_focus.wec. This two-step process is necessary to avoid a model error.   
 
 # Perform ordinal logistic regression for each dependent variable 
 for (var in dependent_vars) {
@@ -1092,13 +1090,35 @@ for (var in names(all_results_b)) {
 # Print the updated all_results for inspection
 print(all_results)
 
+# Create an empty list to store all significant results
+all_significant_results <- list()
+
+# Iterate through each model in the all_results list
+for (model_name in names(all_results)) {
+  # Get the dataframe for the current model
+  model_df <- all_results[[model_name]]
+  
+  # Filter the rows where P_Value is less than 0.2
+  significant_rows <- model_df[model_df$P_Value < 0.2, ]
+  
+  # Add the filtered results to the all_significant_results list, if not empty
+  if (nrow(significant_rows) > 0) {
+    all_significant_results[[model_name]] <- significant_rows
+  }
+}
+
+# Print the significant results without the 'Model' column
+for (model_name in names(all_significant_results)) {
+  cat("\n", model_name, ":\n")
+  print(all_significant_results[[model_name]][, -1], row.names = FALSE) # Exclude the first column ('Model')
+}
 
 #Next step, remove irrelevant variables (I did this manually if all components had a p-value under 0.2)
 
 # $resources_usefulness_collaboration_networking (re-run without aquatic_farm, land_farm, org_years.wec)
 # resources_usefulness_financial (re-run without aquatic_farm, dog_cat_meat, org_geographic_lvl, western/nonwestern)
 # resources_usefulness_grant_applications (re-run without "org_size.wec", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec")
-# resources_usefulness_finding_talent (re-run without  "org_size.wec", "org_budget_usd_standardized", "org_geographic_lvl", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec")
+# resources_usefulness_finding_talent (re-run without "org_budget_usd_standardized", "org_geographic_lvl", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec")
 # resources_usefulness_professional_development (re-run without "org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_budget_usd_standardized", "animal_type_dogcat_meat", "animal_type_land_farm")
 # resources_usefulness_professional_mentorship (re-run without "animal_type_land_farm", "animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec")
 # resources_usefulness_research_data_access (re-run without "org_budget_usd_standardized", "org_years.wec", "animal_type_land_farm", "animal_type_aquatic_farm")
@@ -1108,9 +1128,9 @@ print(all_results)
 
 exclusions <- list(
   resources_usefulness_collaboration_networking = c("animal_type_aquatic_farm", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
-  resources_usefulness_financial = c("western_vs_nonwestern.wec", "western_vs_nonwestern.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_size.wec"),
-  resources_usefulness_grant_applications = c("org_size.wec","org_size.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
-  resources_usefulness_finding_talent = c( "org_size.wec", "org_size.wec_b", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
+  resources_usefulness_financial = c("western_vs_nonwestern.wec", "western_vs_nonwestern.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b"),
+  resources_usefulness_grant_applications = c("animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm"),
+  resources_usefulness_finding_talent = c("org_size.wec", "org_size.wec_b", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
   resources_usefulness_professional_development = c("org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_size.wec_b", "org_years.wec_b", "org_geographic_lvl.wec_b","org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_land_farm", "animal_type_dogcat_meat"),
   resources_usefulness_professional_mentorship = c("animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec", "org_years.wec_b", "org_geographic_lvl.wec_b"),
   resources_usefulness_research_data_access = c("org_budget_usd_standardized", "org_years.wec", "org_years.wec_b", "animal_type_land_farm", "animal_type_aquatic_farm"),

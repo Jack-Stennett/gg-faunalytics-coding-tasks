@@ -46,7 +46,7 @@ load("data_recoded.RData")
 
 data <- recoded_data
 
-# Excluding 2 response IDs that don't include key variables (advocacy choices)
+# Excluding 2 response IDs that don't include key variables (org_focus and advocacy choice questions)
 
 response_ids_to_exclude <- c(
   "R_1QFAa3zZtRFIPUs", "R_2uZC1yXGZDzyPew")
@@ -123,7 +123,7 @@ data$animal_types <- rowSums(data[, c("animal_type_dogcat_meat", "animal_type_co
 
 asia_countries <- c("Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Bhutan", "Brunei", "Cambodia", 
                     "China", "Cyprus", "Georgia", "Hong Kong SAR", "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan", 
-                    "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Malaysia", "Maldives", "Mongolia", "Myanmar", 
+                    "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Macau SAR", "Malaysia", "Maldives", "Mongolia", "Myanmar", 
                     "Nepal", "North Korea", "Oman", "Pakistan", "Palestine", "Philippines", "Qatar", "Saudi Arabia", 
                     "Singapore", "South Korea", "Sri Lanka", "Syria", "Taiwan", "Tajikistan", "Thailand", "Timor-Leste", 
                     "Turkmenistan", "United Arab Emirates", "Uzbekistan", "Vietnam", "Viet Nam", "Yemen")
@@ -143,12 +143,13 @@ africa_countries <- c("Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", 
                       "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", 
                       "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe")
 
-north_america_countries <- c("Antigua and Barbuda", "Bahamas", "Barbados","Canada", "Cuba", 
-                             "Dominica", "Dominican Republic", "Grenada", "Haiti", 
-                             "Jamaica", "Saint Kitts and Nevis", 
-                             "Saint Lucia", "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States")
+north_america_countries <- c("Canada", "United States")
 
-latin_america_countries <- c("Argentina",  "Belize", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Costa Rica", "El Salvador", "Guyana", "Honduras", "Mexico", "Paraguay", 
+
+latin_america_countries <- c("Cuba", "Dominica", "Dominican Republic", "Grenada", "Haiti", 
+                             "Jamaica", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Trinidad and Tobago", 
+                             "Antigua and Barbuda", "Bahamas", "Barbados", "Argentina",  "Belize", "Bolivia", "Brazil", "Chile", 
+                             "Colombia", "Ecuador", "Costa Rica", "El Salvador", "Guyana", "Honduras", "Mexico", "Paraguay", 
                              "Guatemala", "Nicaragua", "Panama", "Peru", "Suriname", "Uruguay", "Venezuela")
 
 oceania_countries <- c("Australia", "Fiji", "Kiribati", "Marshall Islands", "Micronesia", "Nauru", "New Zealand", 
@@ -190,6 +191,10 @@ data <- data %>%
 
 table(data$continent)
 
+# Begin analysis by handling missing data in specified advocacy columns.
+# 'NA' values represent active engagement in a given advocacy type, thus are recoded as 'NA_category'.
+# This recoding allows for meaningful inclusion and analysis of these 'NA' values.
+
 # Define the columns that have NAs
 cols_with_na <- c("interest_policy_2p", "interest_corp_2p", "interest_inst_2p", "interest_diet_2p", "interest_direct_2p")
 
@@ -217,7 +222,7 @@ data[cols_with_na] <- lapply(data[cols_with_na], function(x) {
 # stage to test validity-  A lower withindiff value indicates that the objects in a cluster are more similar to 
 # each other, suggesting a more cohesive and well-defined cluster. However, there is no clear threshold at 
 # which WithinDiff is relevant, therefore I also check that the size of the clusters are relatively even, 
-# to avoid overfitting, and that there are distinct and relevant differences between the modes. 
+# to avoid overfitting, and that there are distinct and relevant differences between the modes of each cluster. 
 
 # List of variables to include in the K-modes clustering (both profiling and segmentation)
 
@@ -239,7 +244,7 @@ cleaned_data_standard <- as.data.frame(cleaned_data)
 max_clusters <- 10
 
 # Initialize vectors to store the averages of each iteration
-average_withindiffs <- numeric(21)
+average_withindiffs <- numeric(21) #21 different alternative random seeds from 0 to 20
 
 # Run K-modes clustering for different seeds and collect averages
 for (i in 0:20) {

@@ -16,7 +16,7 @@ library(htmlwidgets)
 library(plotly)
 
 #Set working directory
-setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
+setwd("C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
 
 # Create the "Exported Descriptive Tables" folder if it doesn't exist
 if (!file.exists("Exported Descriptive Tables")) {
@@ -320,31 +320,66 @@ p <- plot_ly(country_focus_summary, type = 'table',
              header = list(values = list("Country", "Count", "Percentage")),
              cells = list(values = list(country_focus_summary$country_focus_list, country_focus_summary$count, round(country_focus_summary$percentage, 2))))
 
+
 # Define the filename with subfolder path and save the plotly object as an HTML file
 file_name <- "Exported Descriptive Tables/country_focus_summary.html"
 saveWidget(p, file = file_name, selfcontained = TRUE)
 
 # Participant Role
 
-total_responses <- sum(!is.na(data$participant_role))
+table(data$participant_role_9_text)
 
-# Split the 'org_participant_role' column into individual countries and convert to a long format
-participant_role_long <- data %>%
+# Update the recode_role function to categorize specified roles into all_roles
+recode_role <- function(role) {
+  role <- tolower(role) # Convert to lower case for consistent matching
+  all_roles <- c("Strategy & organisational oversight", "Fundraising & grants",
+                 "Operations", "Program", "policy & external affairs",
+                 "Marketing and communications", "Research & analytics", "Volunteer management")
+  all_roles_combined <- paste(all_roles, collapse = ", ")
+  
+  if (grepl("mentor|author|creating materials", role)) {
+    return("Marketing and communications")
+  } else if (grepl("resources|connections|accounting|finance", role)) {
+    return("Fundraising & grants")
+  } else if (grepl("finance|accounting", role)) {
+    return("Operations")
+  } else if (grepl("coordinacion general|exective director|ceo|founder|diretor geral", role)) {
+    return(all_roles_combined)
+  } else if (grepl("hr|human resources", role)) {
+    return("Volunteer management")
+  } else if (grepl("project consultant", role)) {
+    return("Research & analytics")
+  } else if (grepl("all|everything|मैं संस्था में ट्रस्टी हूं|सभी प्रकार के काम", role)) {
+    return(all_roles_combined)
+  } else {
+    return("Other specified")
+  }
+}
+
+# Reapply the function to the 'participant_role_9_text' column
+data$recoded_role <- sapply(data$participant_role_9_text, recode_role, USE.NAMES = FALSE)
+
+# Update the participant_role column with the new recoded_role
+data <- data %>%
+  mutate(participant_role = ifelse(recoded_role != "Other specified", recoded_role, participant_role))
+
+# Remove "Other (please specify)" from participant_role if it's not needed anymore
+data$participant_role <- gsub("Other \\(please specify\\), ", "", data$participant_role)
+data$participant_role <- gsub(", Other \\(please specify\\)", "", data$participant_role)
+data$participant_role <- gsub("^Other \\(please specify\\)$", "Other specified", data$participant_role)
+
+# Now tally the occurrences of each participant_role with the new 'recoded_role' included
+participant_role_summary <- data %>%
   mutate(participant_role_list = strsplit(as.character(participant_role), ",\\s*")) %>%
-  unnest(participant_role_list)
-
-# Now tally the occurrences of each participant_role
-participant_role_summary <- participant_role_long %>%
+  unnest(participant_role_list) %>%
   group_by(participant_role_list) %>%
   summarise(count = n(), .groups = 'drop') %>%
-  mutate(percentage = (count / total_responses) * 100)
-
-# Sort by count
-participant_role_summary <- participant_role_summary %>%
+  mutate(percentage = (count / total_responses) * 100) %>%
   arrange(desc(count))
 
 # View the summary
 print(participant_role_summary)
+
 
 # Create the Plotly interactive table
 p <- plot_ly(participant_role_summary, type = 'table',
