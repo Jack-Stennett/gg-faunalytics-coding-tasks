@@ -159,6 +159,7 @@ create_stats_table <- function(data, variable_name) {
 create_stats_table(data, "org_budget_usd")
 
 # Summary table for non-likert, factor variables
+# Note: Org_focus is mutually exclusive (i.e. the organisation's primary focus)
 
 variables_to_summarize <- c("user_language", "org_years", "org_geographic_lvl",
                             "western_vs_nonwestern",
@@ -215,7 +216,9 @@ animal_binary_variables <- c("animal_type_aquatic_farm", "animal_type_captive", 
                            "animal_type_dogcat_meat", "animal_type_lab", "animal_type_land_farm", 
                            "animal_type_other", "animal_type_wild") # Replace with actual variable names
 
-# Org Advocacy Types
+# Org Advocacy Types (Note: this is a multiple select variable, where the options are corporate work, policy work
+# institutional advocacy, direct work, individual diet and vegan advocacy, and other)
+
 org_advocacy_types <- c("advocacy_type_corporate", "advocacy_type_policy", 
                         "advocacy_type_institutional", "advocacy_type_direct_work", 
                         "advocacy_type_individual_diet", "advocacy_type_other")
@@ -305,8 +308,12 @@ country_focus_summary <- country_focus_data_long %>%
 country_focus_summary <- country_focus_summary %>%
   arrange(desc(count))
 
-# View the summary
+# View the summary. 
 print(country_focus_summary)
+
+# 71% of the orgs that participated were relatively small in terms of size (i.e., org size of 
+# <6 people) & revenue (median = $42,400). This is something to keep in mind for the interpretation of the results.
+
 
 # Create the Plotly interactive table
 p <- plot_ly(country_focus_summary, type = 'table',
