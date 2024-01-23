@@ -191,7 +191,7 @@ data <- data %>%
 
 table(data$continent)
 
-# Begin analysis by handling missing data in specified advocacy columns.
+# Begin analysis by handling missing data in interest_ columns (interest in  a given advocacy type, interest_policy_2p" etc.) 
 # 'NA' values represent active engagement in a given advocacy type, thus are recoded as 'NA_category'.
 # This recoding allows for meaningful inclusion and analysis of these 'NA' values.
 
@@ -249,11 +249,14 @@ cleaned_data <- na.omit(data[, variables_to_include])
 # It ensures that column references are correctly aligned with the reduced dataset after removing NAs.)
 cleaned_data_standard <- as.data.frame(cleaned_data)
 
-# Define the maximum number of clusters to consider
+# Define the maximum number of clusters to consider (10 is a standard maximum number of clusters for a dataset of this size)
+# in order to avoid clusters with too few values, see Sofyan et al 2021 (https://iopscience.iop.org/article/10.1088/1757-899X/1087/1/012085/pdf) 
+
 max_clusters <- 10
 
 # Initialize vectors to store the averages of each iteration
-average_withindiffs <- numeric(21) #21 different alternative random seeds from 0 to 20
+average_withindiffs <- numeric(21) #21 different alternative random seeds from 0 to 20 - this number was chosen according to recommendations
+# in Colas, Sigaud and Oudeyer (2018)'s paper on choosing number of random seeds https://arxiv.org/pdf/1806.08295.pdf
 
 # Run K-modes clustering for different seeds and collect averages
 for (i in 0:20) {
@@ -281,11 +284,11 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # Variable Selection and Refinement
 
 # Observing these results, we see that there is very high variance, and within cluster simple matching distance is high ( 
-# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 11.9013724143004") and highly variable. 
+# "Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 13.23) and highly variable. 
 # We noted that, for the importance variables  the modal value (visible from K-modes results) is almost always "very important", therefore
-# there may be insufficient variation for these variables to provide value to the cluster.No particular statistical tests were performed to come to this conclusion, 
-# but we had identified in a previous part of the study that these importance variables were generally not significantly correlated with other 
-# factors. Below, you can see the same algorithm applied without these importance variables.
+# there seems to be insufficient variation for these variables to provide value to the cluster. Because our previous regression analyses didn't find the 
+# importance variables to significantly predict advocacy type, in addition to showing little variation in the clusters, 
+# we're excluding them from further analyses here. Below, you can see the same algorithm applied without these importance variables.
 
 variables_to_include <- c(
   "org_size_binary", "org_years_binary", "org_mission", "advocacy_type_corporate", "advocacy_type_policy", 
@@ -332,7 +335,11 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # A notable observation was the tendency for certain 'advocacy_type' variables to consistently cluster together. 
 # To quantitatively assess the extent of correlation among these variables, and to explore their potential 
 # in enhancing the depth of our clusters, we performed chi-squared tests, using a p-value of 0.01 to identify 
-# Less strongly correlated variables.
+# less strongly correlated variables. We selected a p-value threshold of 0.01 to more effectively distinguish 
+# strongly correlated variables, as those exhibiting only weak correlations are less likely to contribute 
+# to the formation of consistent and meaningful clusters. This stringent criterion helps ensure 
+# that the variables we identify as significantly correlated are likely to have a substantive 
+# and consistent relationship, and contribute to the integrity of the clusters.
 
 # Initialize a matrix to store p-values
 p_value_matrix <- matrix(NA, nrow = length(variables_to_include), ncol = length(variables_to_include),
@@ -377,9 +384,10 @@ significant_correlation_counts
 # interest_diet_2p            interest_direct_2p 
 # 7                             6 
 
-# We will proceed with the refined set of variables, excluding those with lower correlation counts. This step 
-# aims to focus on variables that contribute more significantly to the clustering process, thereby improving 
-# the clarity and utility of the resulting clusters.
+# We will proceed with the refined set of variables, excluding those with lower correlation counts (under n = 5). Based on this criterion
+# org_years_binary, org_mission,  animal_type_dogcat_meat, animal_type_land_farm, animal_type_aquatic_farm, and advocacy_type_direct_work were excluded.
+# This allows us to distinguish more and less correlated variables, and to focus on variables that 
+# contribute more significantly to the clustering process, thereby improving the clarity and utility of the resulting clusters.
 
 variables_to_include <- c(
   "org_size_binary", "advocacy_type_corporate", "advocacy_type_policy", 
@@ -426,8 +434,12 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # all positively correlated (a group that conducts one of these advocacy types is more likely to conduct another)
 # Among groups who don't conduct these advocacy types, there are groups that are interested or uninterested in these types of advocacy.
 # This appears to be both a consistent effect across different random seeds, and aligns with the clustering needed to answer the RQs. 
-# However, some variables don't show signs of being used in this process, potentially raising the imprecision of the 
-# clustering. Therefore we'll remove org_size_binary, advocacy_type_other, interest_diet_2p and interest_direct_2p. 
+
+# However, after manually verifying the different iterations, some variables don't show signs of being used in this process, and the modes across clusters tend to be 
+# dominated by a single response potentially raising the imprecision of the clustering. For example, in interest_diet_2p, NA_category (145/210 responses) was dominant 
+# across clusters, and the other two responses (Interested and Uninterested or Neutral) failed to form consistent patterns across cluster seeds.
+
+# Therefore we remove org_size_binary, advocacy_type_other, interest_diet_2p and interest_direct_2p from the next stage of analysis. 
 
   variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
     "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
@@ -505,8 +517,8 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
   
   # Print the overall averages
   print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
-  
-# Printing results here: 
+
+# Printing result for seed 1 here (note: the results for Seed 1 are identical to seeds: 0, 2, 3, 4, 5, 6, 7, 8, 10, 15, 16, 17, 20; I choose 1 for simplicity)
 #  
 #  [1] "For seed  1"
 #   K-modes clustering with 3 clusters of sizes 52, 86, 72
@@ -526,11 +538,12 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 #    [1] 1.988610 3.492529 3.127797
   
 # The outcomes of this clustering are clear. There is a clustering where: 1) The majority of cluster one conducts fewer advocacy types
-# and is uninterested in pursuing these types of advocacy. 2) The majority of cluster 2 conducts these four types of advocacy and 
-# is therefore uninterested in pursuing other types. 3) The majority of cluster 3 conducts fewer advocacy types, but is interested in 
-# pursuing other advocacy types. 
+# and is uninterested in pursuing policy, corporate or institutional advocacy. 2) The majority of cluster 2 conducts these four types of advocacy and 
+# is therefore not interested ("NA_category") in pursuing other types. 3) The majority of cluster 3 conducts fewer advocacy types, albeit is more likely to conduct individual
+# diet advocacy, but is interested in pursuing other advocacy types. This will be made clearer in the tables and figures below.
 
-# Here I set the seed to 1 and run again, storing this as the cluster variable. 
+# Here I set the seed to 1 and run again, storing this as the cluster variable. This is just because the seed is currently set to 20 from the previous for loop and should
+# be reset to a clearer/ more legible number.  
 
 set.seed(1)  
 kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
@@ -577,8 +590,6 @@ print(kmodes_result)
     cat("\n")
   }
 
-table(data$interview_1)
-
 # Identify list columns in the dataframe
 list_columns <- sapply(data, function(x) is.list(x))
 
@@ -595,7 +606,7 @@ file_path <- "C:/Users/jack_/Desktop/clustered_data.csv"
 # Stage 2 : Testing Cluster Validity
 ######
 
-#As the Rand Index (mentioned in pre-reg) is unsuitable for the variables we have chosen in this K-modes clustering, 
+# As the Rand Index (mentioned in pre-reg) is unsuitable for the variables we have chosen in this K-modes clustering, 
 # because the variables are all categorical, we can use the Within Cluster sum of differences and the silhouette score to test the validity of clusters. 
 # This paper (Salem et al, 2021) illustrates how you can use silhouette scores to validate clustering https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7998089/
 # The original paper on K modes clustering (Huang 1997) illustrates how we can use within cluster sum of difference to 
@@ -640,9 +651,9 @@ avg_sil_score <- mean(silhouette_scores[, "sil_width"])
 print(paste("Average Silhouette Score:", avg_sil_score))
 
 #[1] "Average Silhouette Score: 0.328840676362168"
-# This indicates that clusters are somewhat distinct. (Perfectly-clustered elements have a score of 1, while 
+# This indicates that clusters are weakly distinct. (Perfectly-clustered elements have a score of 1, while 
 # poorly-clustered elements have a score near -1. （https://search.r-project.org/CRAN/refmans/bios2mds/html/sil.score.html） 
-# A value between 0.25 and 0.65 is considered weakly distinct (Lovmar et al, 2005 : doi:10.1186/1471-2164-6-35)
+# A value between 0.25 and 0.65 is considered weakly distinct (Lovmar et al, 2005 : doi:10.1186/1471-2164-6-35). 
 
 # Plot silhouette scores 
 plot(silhouette_scores, col = 1:max(clusters), border = NA)
@@ -662,7 +673,7 @@ plot(silhouette_scores, col = 1:max(clusters), border = NA)
 
 # Tables
 
-  selected_variables <- c("interview_1", "org_years", "org_geographic_lvl", "continent",
+  selected_variables <- c("org_years", "org_geographic_lvl", "continent",
                           "interest_diet", "interest_corp",
                           "interest_policy", "interest_inst", "interest_direct", 
                           "satisfaction_diet_advocacy", "satisfaction_corp_advocacy", 
