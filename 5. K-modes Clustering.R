@@ -481,44 +481,8 @@ print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) acro
 # This now gives the most stable set of clusters. 12/21 iterations give identical clusters, and they have low average within-cluster differences.  
 # Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds: 3.07114936960419"
 
-  variables_to_include <- c("advocacy_type_institutional", "advocacy_type_individual_diet",
-    "advocacy_type_policy", "advocacy_type_corporate", "interest_policy_2p", "interest_corp_2p", "interest_inst_2p")
-  
-  # Add a temporary identifier to match the rows before removing NAs
-  data$id <- seq_len(nrow(data))
-  
-  # Keep only the variables we want to include for K-modes
-  cleaned_data <- data[, c(variables_to_include, "id")]
-  
-  # Remove rows with any missing values in the specified columns
-  cleaned_data <- na.omit(cleaned_data)
-  
-  # Convert cleaned_data to a standard data frame
-  cleaned_data_standard <- as.data.frame(cleaned_data)
-  
-  # Run K-modes clustering for different seeds and collect averages
-  for (i in 0:20) {
-    set.seed(i)
-    kmodes_result <- kmodes(cleaned_data_standard[, variables_to_include, drop = FALSE], 3, 100, 100)
-    
-    # Calculate the average withindiff for the current iteration
-    average_withindiff <- mean(kmodes_result$withindiff)
-    average_withindiffs[i + 1] <- average_withindiff
-    
-    print(paste("For seed ", i))
-    print(kmodes_result)
-    
-    # Print the results for the current iteration
-    print(paste("For seed", i, "- Average withindiff:", average_withindiff))
-  }
-  
-  # Calculate the overall average of the withindiffs and cluster sizes
-  overall_average_withindiff <- mean(average_withindiffs)
-  
-  # Print the overall averages
-  print(paste("Overall Average Within-cluster Sum of Differences (Withindiff) across all seeds:", overall_average_withindiff))
-
-# Printing result for seed 1 here (note: the results for Seed 1 are identical to seeds: 0, 2, 3, 4, 5, 6, 7, 8, 10, 15, 16, 17, 20; I choose 1 for simplicity)
+# Printing result for seed 1 here (note: the results for Seed 1 are identical to seeds: 0, 2, 3, 4, 5, 6, 7, 8, 10, 15, 16, 17, 20; 
+# I choose 1 for simplicity). Other identical seeds have exactly the same clusters but may be in a different order. 
 #  
 #  [1] "For seed  1"
 #   K-modes clustering with 3 clusters of sizes 52, 86, 72
