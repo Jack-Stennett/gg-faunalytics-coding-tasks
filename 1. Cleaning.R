@@ -11,7 +11,7 @@
 rm(list = ls())
 
 #Set working directory
-setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
+setwd("C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
 
 # Load required libraries
 library(dplyr)

@@ -27,7 +27,7 @@
 rm(list = ls())
 
 #Set working directory
-setwd("C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
+setwd("C:/Users/jack_/Desktop/International-Study-Of-Strategies-And-Needs")
 
 # Load required libraries
 library(tidyverse)
@@ -562,8 +562,11 @@ data[, list_columns] <- lapply(data[, list_columns], function(x) {
   sapply(x, toString)
 })
 
-# Define the file path for the CSV file
-file_path <- "C:/Users/jack_/Desktop/clustered_data.csv"
+# Creating a CSV file to export the data with the appropriate cluster identification
+
+file_path <- "C:/Users/jack_/Desktop/International-Study-Of-Strategies-And-Needs/clustered_data.csv"
+
+write.csv(data, file_path, row.names = FALSE)
 
 
 ######
