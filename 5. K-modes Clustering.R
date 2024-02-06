@@ -564,7 +564,7 @@ data[, list_columns] <- lapply(data[, list_columns], function(x) {
 
 # Creating a CSV file to export the data with the appropriate cluster identification
 
-file_path <- "C:/Users/jack_/Desktop/International-Study-Of-Strategies-And-Needs/clustered_data.csv"
+file_path <- "C:/Users/jack_/Desktop/International-Study-Of-Strategies-And-Needs/clustered_data1.csv"
 
 write.csv(data, file_path, row.names = FALSE)
 
@@ -678,7 +678,7 @@ plot(silhouette_scores, col = 1:max(clusters), border = NA)
   }
 
 # Define the directory where plots will be saved
-plots_dir <- "C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs/plots/"
+plots_dir <- "C:/Users/jack_/Desktop/International-Study-Of-Strategies-And-Needs/plots/"
 
 # Check if the directory exists, and create it if it doesn't
 if (!dir.exists(plots_dir)) {
@@ -728,5 +728,3 @@ for (var in selected_variables) {
   # Print the plot to the console as well
   print(p)
 }
-
-

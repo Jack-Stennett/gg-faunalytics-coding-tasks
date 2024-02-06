@@ -50,21 +50,25 @@ data$org_focus <- recode(data$org_focus,
                          "Other (please specify)" = "Other")
 
 
+# In the following section we reduce the smaller categories of org_size and org_years because the number of responses
+# is lower than 10, so pooling is necessary for analysis
+
 # Adjust 'org_size' to combine "21-40", "41-100" and "101+" into "21+"
 data$org_size <- ifelse(data$org_size %in% c("21-40", "41-100", "101+"), "21+", as.character(data$org_size))
 data$org_size <- factor(data$org_size, 
                         levels = c("Less than 1", "1-5", "6-10", "11-20", "21+"),
                         ordered = TRUE)
 
-# Adjust 'org_years' to combine "Less than 1 year" and "1-2 years" into "Under 2 years"
-data$org_years <- ifelse(data$org_years %in% c("Less than 1 year", "1-2 years"), "Under 2 years", as.character(data$org_years))
+# Adjust 'org_years' to combine "Less than 1 year" and "1-2 years" into "2 years or under"
+data$org_years <- ifelse(data$org_years %in% c("Less than 1 year", "1-2 years"), "2 years or under", as.character(data$org_years))
 data$org_years <- factor(data$org_years, 
-                         levels = c("Under 2 years", "3-5 years", "6-10 years", "More than 10 years"),
+                         levels = c("2 years or under", "3-5 years", "6-10 years", "More than 10 years"),
                          ordered = TRUE)
 
 data$org_budget_usd_standardized <- scale(data$org_budget_usd)
 
-#Recode "online only" in western/ nonwestern as "Mixed"
+#Recode "online only" in western/ non-western as "Mixed" - this is recoded because there are only 2 responses that select "online only", therefore this is not valuable 
+# for any analysis and is recoded as "mixed" because "online only" organisations are likely to work with global actors
 
 data$western_vs_nonwestern <- recode(data$western_vs_nonwestern, 
                                          `Online only` = "Mixed")
@@ -138,7 +142,7 @@ combined_tables <- Map(create_combined_table, advocacy_types, advocacy_type_name
 # Output the result
 print(combined_tables)
 
-# Advocacy Type: Corporate: 27.7% (n = 36) of Non-western groups, and 27.9% of Western groups engage in corporate advocacy 
+# Advocacy Type: Corporate: 27.27% (n = 36) of Non-western groups, and 27.9% of Western groups engage in corporate advocacy 
 # Advocacy Type: Direct Work: 33.33% (n = 44) of Non-Western groups, and 19.67% (n = 12) of Western groups engage in direct work advocacy.
 # Advocacy Type: Institutional: 46.97% (n = 62) of Non-Western groups, and 26.23% (n = 16) of Western groups engage in institutional advocacy.
 # Advocacy Type: Policy: 38.64% (n = 51) of Non-Western groups, and 36.07% (n = 22) of Western groups engage in policy advocacy.
@@ -256,10 +260,11 @@ contrasts(data$org_size.wec_b) <- contr.wec(data$org_size.wec_b, "21+") #21+ is 
 contrasts(data$org_size.wec_b)
 
 # Apply weighted effect coding to org_years
+data$org_years
 data$org_years.wec <- factor(data$org_years)
 data$org_years.wec_b <- factor(data$org_years) #duplicate variable to can look at X level vs. grand mean 
 
-contrasts(data$org_years.wec) <- contr.wec(data$org_years.wec, "Under 2 years") #Under 2 years is omitted 
+contrasts(data$org_years.wec) <- contr.wec(data$org_years.wec, "2 years or under") #"2 years or under" is omitted 
 contrasts(data$org_years.wec)
 
 contrasts(data$org_years.wec_b) <- contr.wec(data$org_years.wec_b, "More than 10 years") #More than 10 years is now omitted 
@@ -308,17 +313,6 @@ contrasts(data$org_focus.wec)
 
 contrasts(data$org_focus.wec_b) <- contr.wec(data$org_focus.wec_b, "Other") #other is omitted 
 contrasts(data$org_focus.wec_b)
-
-# Apply weighted effect coding to org_western
-
-data$western_vs_nonwestern.wec <- factor(data$western_vs_nonwestern)
-data$western_vs_nonwestern.wec_b <- factor(data$western_vs_nonwestern) #duplicate variable to see X level vs. grand mean 
-
-contrasts(data$western_vs_nonwestern.wec) <- contr.wec(data$western_vs_nonwestern.wec, "Western") #western is omitted
-contrasts(data$western_vs_nonwestern.wec)
-
-contrasts(data$western_vs_nonwestern.wec_b) <- contr.wec(data$western_vs_nonwestern.wec_b, "Mixed") #mixed is omitted
-contrasts(data$western_vs_nonwestern.wec_b)
 
 # Logistic regression model(this is just assessing the inclusion of extraneous variables, and we correct for multiple
 # terms in the model)
@@ -379,7 +373,7 @@ preinclusion_results_b <- data.frame(
 ## Omit duplicate variables from model_b (just want specific contrasts from this model)
 preinclusion_results_b <- preinclusion_results_b [(preinclusion_results_b$Coefficient %in% c(
   "org_size.wec_bLess than 1",
-  "org_years.wec_bUnder 2 years",
+  "org_years.wec_b2 years or under",
   "org_mission.wec_bRights",
   "org_geographic_lvl.wec_bNational",
   "western_vs_nonwestern.wec_bWestern")),]
@@ -447,7 +441,7 @@ preinclusion_results_2b <- data.frame(
 ## Omit duplicate variables from model_b (just want specific contrasts from this model)
 preinclusion_results_2b <- preinclusion_results_2b [(preinclusion_results_2b$Coefficient %in% c(
   "org_size.wec_bLess than 1",
-  "org_years.wec_bUnder 2 years",
+  "org_years.wec_b2 years or under",
   "org_mission.wec_bRights",
   "org_geographic_lvl.wec_bNational",
   "western_vs_nonwestern.wec_bWestern")),]
@@ -516,7 +510,7 @@ preinclusion_results_3b <- data.frame(
 ## Omit duplicate variables from model_b (just want specific contrasts from this model)
 preinclusion_results_3b <- preinclusion_results_3b [(preinclusion_results_3b$Coefficient %in% c(
   "org_size.wec_bLess than 1",
-  "org_years.wec_bUnder 2 years",
+  "org_years.wec_b2 years or under",
   "org_mission.wec_bRights",
   "org_geographic_lvl.wec_bNational",
   "western_vs_nonwestern.wec_bWestern")),]
@@ -585,7 +579,7 @@ preinclusion_results_4b <- data.frame(
 ## Omit duplicate variables from model_b (just want specific contrasts from this model)
 preinclusion_results_4b <- preinclusion_results_4b [(preinclusion_results_4b$Coefficient %in% c(
   "org_size.wec_bLess than 1",
-  "org_years.wec_bUnder 2 years",
+  "org_years.wec_b2 years or under",
   "org_mission.wec_bRights",
   "org_geographic_lvl.wec_bNational",
   "western_vs_nonwestern.wec_bWestern")),]
@@ -657,7 +651,7 @@ preinclusion_results_5b <- data.frame(
 ## Omit duplicate variables from model_b (just want specific contrasts from this model)
 preinclusion_results_5b <- preinclusion_results_5b [(preinclusion_results_5b$Coefficient %in% c(
   "org_size.wec_bLess than 1",
-  "org_years.wec_bUnder 2 years",
+  "org_years.wec_b2 years or under",
   "org_mission.wec_bRights",
   "org_geographic_lvl.wec_bNational",
   "western_vs_nonwestern.wec_bWestern")),]
@@ -756,14 +750,15 @@ final_model_output_b <- final_model_output_b [(final_model_output_b$Coefficient 
 ## Join both dataframes 
 final_model_results <- bind_rows(final_model_output, final_model_output_b) 
 
-## Correct for multiple testing using Benjamini-Hochberg correction 
+## Correct for multiple testing using Benjamini-Hochberg correction. Note: we're doing the p-value adjustment 
+# separately here, while the adjustment for the remaining models will be done via a function for simplicity. 
+
 model_2_combined_stats <- final_model_results %>% 
   mutate(AdjustedPValue = p.adjust(P_Values, method = "BH", n = length(P_Values))) %>%
   arrange(AdjustedPValue) 
 
 final_model_3 <- glm(advocacy_type_direct_work ~  
                  animal_type_aquatic_farm +
-                 animal_type_dogcat_meat +
                  importance_funding_availability +
                  importance_talent_availability +
                  importance_context_appropriateness +
@@ -817,7 +812,8 @@ extract_model_stats <- function(model) {
   return(model_stats)
 }
 
-# Applying the function to models (p-value adjustment will be done separately for model_2)
+# Applying the function to models (Note: p-value adjustment has already been done separately for model_2)
+
 model_1_stats <- extract_model_stats(final_model_1)
 model_3_stats <- extract_model_stats(final_model_3)
 model_4_stats <- extract_model_stats(final_model_4)
@@ -832,13 +828,12 @@ print(model_5_stats)
 
 #Final Model 1: No significant variables
 
-# Final Model 2: Only org_mission welfare  (p = 0.0005104452), (Estimate : -2.02024) and org_mission_rights  (p = 0.0032542726), (Estimate : 0.85694063)remains significant after adjustment- 
+# Final Model 2: Only org_mission welfare  (AdjustedPValue = 0.0005104452), (Estimate : -2.02024) and org_mission_rights  (p = 0.0032542726), (Estimate : 0.85694063)remains significant after adjustment- 
 # organisations with a welfare-oriented mission are significantly less likely to engage in 
 # individual diet interventions, while those with a rights-oriented mission are more likely to do so, 
 # but this does not correlate with the importance of any given importance variable. 
 
-# Final Model 3: Animal type remains significantly associated with model3. Organisations that engage with aquatic farm animals are significantly less likely to engage in direct work (p = 0.00291568, Estimate: -2.6380), 
-# while organisations that engage in cat/ dog meat advocacy are significantly more likely to engage in direct work (p = 0.03318557, Estimate: 2.3207). 
+# Final Model 3: Animal type remains significantly associated with model3. Organisations that engage with aquatic farmed animals are significantly less likely to engage in direct work (p = 0.01997634, Estimate: -1.1137709). 
 
 # Final Model 4: Nothing is significant
 
@@ -1073,7 +1068,7 @@ print(all_results)
 print(all_results_b)
 
 # Specify the variables to add
-variables_to_add <- c("org_years.wec_bUnder 2 years", "org_size.wec_bLess than 1", 
+variables_to_add <- c("org_years.wec_b2 years or under", "org_size.wec_bLess than 1", 
                       "western_vs_nonwestern.wec_bWestern", "org_geographic_lvl.wec_bNational")
 
 # Iterate through the dependent variables in all_results_b
@@ -1113,28 +1108,19 @@ for (model_name in names(all_significant_results)) {
   print(all_significant_results[[model_name]][, -1], row.names = FALSE) # Exclude the first column ('Model')
 }
 
-#Next step, remove irrelevant variables (I did this manually if all components had a p-value under 0.2)
-
-# $resources_usefulness_collaboration_networking (re-run without aquatic_farm, land_farm, org_years.wec)
-# resources_usefulness_financial (re-run without aquatic_farm, dog_cat_meat, org_geographic_lvl, western/nonwestern)
-# resources_usefulness_grant_applications (re-run without "org_size.wec", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec")
-# resources_usefulness_finding_talent (re-run without "org_budget_usd_standardized", "org_geographic_lvl", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec")
-# resources_usefulness_professional_development (re-run without "org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_budget_usd_standardized", "animal_type_dogcat_meat", "animal_type_land_farm")
-# resources_usefulness_professional_mentorship (re-run without "animal_type_land_farm", "animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec")
-# resources_usefulness_research_data_access (re-run without "org_budget_usd_standardized", "org_years.wec", "animal_type_land_farm", "animal_type_aquatic_farm")
-# resources_usefulness_staff_well_being (re-run without "org_size.wec", "org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec")
+#Next step, remove irrelevant variables (I did this manually if all components had a p-value under 0.2) 
 
 # Define list of models with variables to be excluded for each dependent variable
 
 exclusions <- list(
-  resources_usefulness_collaboration_networking = c("animal_type_aquatic_farm", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
-  resources_usefulness_financial = c("western_vs_nonwestern.wec", "western_vs_nonwestern.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b"),
-  resources_usefulness_grant_applications = c("animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm"),
+  resources_usefulness_collaboration_networking = c("animal_type_aquatic_farm", "animal_type_land_farm", "org_years.wec", "org_years.wec_b", "org_size.wec", "org_size.wec_b"),
+  resources_usefulness_financial = c("western_vs_nonwestern.wec", "western_vs_nonwestern.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b", "org_years.wec", "org_years.wec_b"),
+  resources_usefulness_grant_applications = c("animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b"),
   resources_usefulness_finding_talent = c("org_size.wec", "org_size.wec_b", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
-  resources_usefulness_professional_development = c("org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_size.wec_b", "org_years.wec_b", "org_geographic_lvl.wec_b","org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_land_farm", "animal_type_dogcat_meat"),
-  resources_usefulness_professional_mentorship = c("animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec", "org_years.wec_b", "org_geographic_lvl.wec_b"),
+  resources_usefulness_professional_development = c("org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec_b", "org_years.wec_b", "org_geographic_lvl.wec_b","org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_land_farm", "animal_type_dogcat_meat"),
+  resources_usefulness_professional_mentorship = c("animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec", "org_years.wec_b", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b"),
   resources_usefulness_research_data_access = c("org_budget_usd_standardized", "org_years.wec", "org_years.wec_b", "animal_type_land_farm", "animal_type_aquatic_farm"),
-  resources_usefulness_staff_well_being = c("org_size.wec","org_size.wec_b", "org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b")
+  resources_usefulness_staff_well_being = c("org_size.wec","org_size.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b")
 )
 
 # Initialize a list to store new results
@@ -1157,7 +1143,7 @@ for (var in dependent_vars) {
     model <- polr(formula, data = data, Hess = TRUE)
     model_summary <- summary(model)
     
-    # Calculate p-values and adjust them
+    # Calculate p-values and compute two-tailed p-values for regression coefficients
     p_values <- 2 * pt(-abs(model_summary$coefficients[, "t value"]), df = nrow(data) - length(independent_vars) - 1, lower.tail = TRUE)
     
     # Extract coefficients
@@ -1188,7 +1174,7 @@ for (var in dependent_vars) {
     model <- polr(formula, data = data, Hess = TRUE)
     model_summary <- summary(model)
     
-    # Calculate p-values and adjust them
+    # Calculate p-values and compute two-tailed p-values for regression coefficients
     p_values <- 2 * pt(-abs(model_summary$coefficients[, "t value"]), df = nrow(data) - length(independent_vars) - 1, lower.tail = TRUE)
     
     # Extract coefficients
@@ -1203,7 +1189,7 @@ for (var in dependent_vars) {
 }
 
 # Specify the variables to add
-variables_to_add <- c("org_years.wec_bUnder 2 years", "org_size.wec_bLess than 1", 
+variables_to_add <- c("org_years.wec_b2 years or under", "org_size.wec_bLess than 1", 
                       "western_vs_nonwestern.wec_bWestern", "org_geographic_lvl.wec_bNational", "org_focus.wec_bCorporate Campaigns")
 
 # Iterate through the dependent variables in all_results_b to append _b results
@@ -1256,15 +1242,15 @@ for (model_name in unique(all_results_combined$Model)) {
   print(summarize_significance(model_results))
 }
 
-
+# 
 # Model: resources_usefulness_collaboration_networking 
-# [1] "Significant variables: animal_type_dogcat_meat (Coefficient = 1.25907116527568 , Adjusted_P_Value = 0.0468170888104062 ), western_vs_nonwestern.wecNon-Western (Coefficient = 0.366412597030269 , Adjusted_P_Value = 0.0468170888104062 ), Not at all useful|Somewhat useful (Coefficient = -2.36935630446678 , Adjusted_P_Value = 0.000000147649499521449 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.700860784522244 , Adjusted_P_Value = 0.0468170888104062 )"
+# [1] "Significant variables: animal_type_dogcat_meat (Coefficient = 1.20067407939173 , Adjusted_P_Value = 0.0392023829210096 ), western_vs_nonwestern.wecNon-Western (Coefficient = 0.432028679772135 , Adjusted_P_Value = 0.0098069102372257 ), Not at all useful|Somewhat useful (Coefficient = -2.7479173102159 , Adjusted_P_Value = 0.000000000000128556039801873 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.785244393454789 , Adjusted_P_Value = 0.0107750900352726 )"
 # 
 # Model: resources_usefulness_financial 
-# [1] "Significant variables: animal_type_land_farm (Coefficient = 2.11614389921878 , Adjusted_P_Value = 0.0355642935078708 ), Not at all useful|Somewhat useful (Coefficient = -2.53920171727137 , Adjusted_P_Value = 0.0280922916658641 )"
+# [1] "Significant variables: animal_type_land_farm (Coefficient = 2.08043828043349 , Adjusted_P_Value = 0.029498418520597 ), Not at all useful|Somewhat useful (Coefficient = -2.56793140786229 , Adjusted_P_Value = 0.0185540715090941 )"
 # 
 # Model: resources_usefulness_grant_applications 
-# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -2.90040348460943 , Adjusted_P_Value = 0.00000000582054060625623 )"
+# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -3.06912509301975 , Adjusted_P_Value = 0.0000000000000191416503510731 ), Somewhat useful|Very useful (Coefficient = -1.16736768305559 , Adjusted_P_Value = 0.0000000849448634169445 )"
 # 
 # Model: resources_usefulness_finding_talent 
 # [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -1.9021444603648 , Adjusted_P_Value = 0.0000000000000165616265612924 )"
@@ -1273,10 +1259,10 @@ for (model_name in unique(all_results_combined$Model)) {
 # [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.293665356505189 , Adjusted_P_Value = 0.0493828632613771 ), org_focus.wecDiet Outreach (Coefficient = 0.55900540862333 , Adjusted_P_Value = 0.0388604585559778 ), Not at all useful|Somewhat useful (Coefficient = -2.01469114796903 , Adjusted_P_Value = 0.00000000000000391184267382671 )"
 # 
 # Model: resources_usefulness_professional_mentorship 
-# [1] "No significant variables"
+# [1] "Significant variables: Not at all useful|Somewhat useful (Coefficient = -1.97621176623926 , Adjusted_P_Value = 0.0207793809119977 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.661363792883941 , Adjusted_P_Value = 0.0409765717813021 )"
 # 
 # Model: resources_usefulness_research_data_access 
 # [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.417231961127309 , Adjusted_P_Value = 0.0205308183375799 ), Not at all useful|Somewhat useful (Coefficient = -2.866083665572 , Adjusted_P_Value = 0.000000000000141329443166326 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.930343466547159 , Adjusted_P_Value = 0.00647125684270975 )"
 # 
 # Model: resources_usefulness_staff_well_being 
-# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.451595814644737 , Adjusted_P_Value = 0.00137642580145583 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.950663031275859 , Adjusted_P_Value = 0.00137642580145583 )"
+# [1] "Significant variables: western_vs_nonwestern.wecNon-Western (Coefficient = 0.452176770070049 , Adjusted_P_Value = 0.00173642488004661 ), western_vs_nonwestern.wec_bWestern (Coefficient = -0.95130012271274 , Adjusted_P_Value = 0.00173642488004661 )"
