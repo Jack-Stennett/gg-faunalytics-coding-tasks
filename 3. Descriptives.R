@@ -256,9 +256,12 @@ create_binary_summary_table(data, advocacy_institutional)
 create_binary_summary_table(data, animal_binary_variables)
 
 #######
-# Additional variables - splitting org_country, country_focus and participant_role into their separate categories
+# Additional variables - splitting org_country, country_focus and participant_role into their separate categories 
 #######
 
+# Note: org_country asked respondents to add all of the countries in which they worked, while country_focus asked which of these countries
+# they focused the majority of their work on.
+       
 #Identify number of total non-NA responses
 
 total_responses <- sum(!is.na(data$org_country))
@@ -383,7 +386,9 @@ participant_role_summary <- data %>%
   mutate(percentage = (count / total_responses) * 100) %>%
   arrange(desc(count))
 
-# View the summary
+# View the summary (Note that most respondents are from leadership roles. This is partly due to the nature of the sample, and partly because
+# of small average organisation size)
+
 print(participant_role_summary)
 
 
