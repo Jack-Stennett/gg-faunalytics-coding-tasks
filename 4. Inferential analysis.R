@@ -828,12 +828,12 @@ print(model_5_stats)
 
 #Final Model 1: No significant variables
 
-# Final Model 2: Only org_mission welfare  (AdjustedPValue = 0.0005104452), (Estimate : -2.02024) and org_mission_rights  (p = 0.0032542726), (Estimate : 0.85694063)remains significant after adjustment- 
+# Final Model 2: Only org_mission welfare  (AdjustedPValue = 0.001047645), (Estimate : -2.02024) and org_mission_rights  (AdjustedPValue = 0.004649521), (Estimate : 0.85694063)remains significant after adjustment- 
 # organisations with a welfare-oriented mission are significantly less likely to engage in 
 # individual diet interventions, while those with a rights-oriented mission are more likely to do so, 
 # but this does not correlate with the importance of any given importance variable. 
 
-# Final Model 3: Animal type remains significantly associated with model3. Organisations that engage with aquatic farmed animals are significantly less likely to engage in direct work (p = 0.01997634, Estimate: -1.1137709). 
+# Final Model 3: Animal type remains significantly associated with model3. Organisations that engage with aquatic farmed animals are significantly less likely to engage in direct work (AdjustedPValue = 0.01997634, Estimate: -1.1137709). 
 
 # Final Model 4: Nothing is significant
 
@@ -1117,7 +1117,7 @@ exclusions <- list(
   resources_usefulness_financial = c("western_vs_nonwestern.wec", "western_vs_nonwestern.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b", "org_years.wec", "org_years.wec_b"),
   resources_usefulness_grant_applications = c("animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b"),
   resources_usefulness_finding_talent = c("org_size.wec", "org_size.wec_b", "org_budget_usd_standardized", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "animal_type_land_farm", "org_years.wec", "org_years.wec_b"),
-  resources_usefulness_professional_development = c("org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec_b", "org_years.wec_b", "org_geographic_lvl.wec_b","org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_land_farm", "animal_type_dogcat_meat"),
+  resources_usefulness_professional_development = c("org_size.wec", "org_years.wec", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b", "org_size.wec_b", "org_years.wec_b", "org_budget_usd_standardized", "animal_type_aquatic_farm", "animal_type_land_farm", "animal_type_dogcat_meat"),
   resources_usefulness_professional_mentorship = c("animal_type_dogcat_meat", "org_years.wec", "org_geographic_lvl.wec", "org_years.wec_b", "org_geographic_lvl.wec_b", "org_size.wec", "org_size.wec_b"),
   resources_usefulness_research_data_access = c("org_budget_usd_standardized", "org_years.wec", "org_years.wec_b", "animal_type_land_farm", "animal_type_aquatic_farm"),
   resources_usefulness_staff_well_being = c("org_size.wec","org_size.wec_b", "animal_type_aquatic_farm", "animal_type_dogcat_meat", "org_geographic_lvl.wec", "org_geographic_lvl.wec_b")
