@@ -329,27 +329,33 @@ saveWidget(p, file = file_name, selfcontained = TRUE)
 
 table(data$participant_role_9_text)
 
-# Update the recode_role function to categorize specified roles into all_roles
+# Update the recode_role function to categorize specified roles into all_roles (a vector containing all categories of roles; this is 
+# to efficiently categorize respondents who said they have all the roles in a given organisation (often because they are the only member)
+       
 recode_role <- function(role) {
   role <- tolower(role) # Convert to lower case for consistent matching
   all_roles <- c("Strategy & organisational oversight", "Fundraising & grants",
-                 "Operations", "Program", "policy & external affairs",
+                 "Operations", "Program, policy & external affairs",
                  "Marketing and communications", "Research & analytics", "Volunteer management")
   all_roles_combined <- paste(all_roles, collapse = ", ")
+
+  #After individually verifying responses (using a translator), we categorise the responses according to a category, leaving those that
+  # don't fit into any of the specified categories as "Other specified". The two Hindi responses translate to "I am a trustee in this organisation" and 
+  # and "All kinds of work"
   
   if (grepl("mentor|author|creating materials", role)) {
     return("Marketing and communications")
   } else if (grepl("resources|connections|accounting|finance", role)) {
-    return("Fundraising & grants")
-  } else if (grepl("finance|accounting", role)) {
     return("Operations")
-  } else if (grepl("coordinacion general|exective director|ceo|founder|diretor geral", role)) {
-    return(all_roles_combined)
+  } else if (grepl("Managing", role)) {
+    return("Program, policy, & external affairs")
+  } else if (grepl("coordinacion general|exective director|ceo|founder|diretor geral|मैं संस्था में ट्रस्टी हूं", role)) {
+    return("Strategy & organisational oversight")
   } else if (grepl("hr|human resources", role)) {
-    return("Volunteer management")
+    return("Operations")
   } else if (grepl("project consultant", role)) {
     return("Research & analytics")
-  } else if (grepl("all|everything|मैं संस्था में ट्रस्टी हूं|सभी प्रकार के काम", role)) {
+  } else if (grepl("all|everything|सभी प्रकार के काम", role)) {
     return(all_roles_combined)
   } else {
     return("Other specified")
