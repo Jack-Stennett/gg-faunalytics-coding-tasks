@@ -16,7 +16,7 @@ library(htmlwidgets)
 library(plotly)
 
 #Set working directory
-setwd("C:/Users/jack_/Desktop/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
+setwd("C:/Users/jack_/OneDrive/Documents/GitHub/International-Study-Of-Strategies-And-Needs")
 
 # Create the "Exported Descriptive Tables" folder if it doesn't exist
 if (!file.exists("Exported Descriptive Tables")) {
@@ -368,14 +368,13 @@ recode_role <- function(role) {
 # Reapply the function to the 'participant_role_9_text' column
 data$recoded_role <- sapply(data$participant_role_9_text, recode_role, USE.NAMES = FALSE)
 
-# Update the participant_role column with the new recoded_role
-data <- data %>%
-  mutate(participant_role = ifelse(recoded_role != "Other specified", recoded_role, participant_role))
+# Update the participant_role column with the new recoded_role and remove "Other (please specify) if not needed
 
-# Remove "Other (please specify)" from participant_role if it's not needed anymore
-data$participant_role <- gsub("Other \\(please specify\\), ", "", data$participant_role)
-data$participant_role <- gsub(", Other \\(please specify\\)", "", data$participant_role)
-data$participant_role <- gsub("^Other \\(please specify\\)$", "Other specified", data$participant_role)
+data <- data %>%
+  mutate(participant_role = as.character(participant_role), # Convert factor to character
+         participant_role = ifelse(grepl("Other \\(please specify\\)", participant_role),
+                                   ifelse(!is.na(recoded_role), recoded_role, participant_role),
+                                   participant_role))
 
 # Now tally the occurrences of each participant_role with the new 'recoded_role' included
 participant_role_summary <- data %>%
