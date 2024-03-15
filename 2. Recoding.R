@@ -149,7 +149,7 @@ data <- data %>%
 # Code to verify, note that we left countries in the same order for Spanish. 
 
 filtered_data <- data %>% filter(q_language != "EN" & q_language != "ES-ES")
-view(filtered_data[, c("uncorrected_org_country", "org_country", "uncorrected_country_focus", "country_focus", "q_language")])
+View(filtered_data[, c("uncorrected_org_country", "org_country", "uncorrected_country_focus", "country_focus", "q_language")])
 
 # We have two variables 1) org_country (all countries they worked in), and 2) country_focus (only for those who gave multiple responses for org_country)
 # Those who chose a single response for org_country did not answer country_focus, therefore this code copies org_country to country_focus 
@@ -166,6 +166,10 @@ sum(is.na(data$org_country)) ## 2 non-responses (unfinished)
 sum(is.na(data$country_focus)) ## 6 non-responses  (unfinished)
 sum(!is.na(data$country_focus)) ## 206 responses with valid responses
 
+# Developing new country focus variable where we can identify % of responses for each individual country.
+
+
+
 # -------------------------------
 # Recoding budget variables
 # -------------------------------
@@ -176,7 +180,7 @@ data$org_budget_usd <- as.numeric(gsub("\\.000", "000", data$org_budget))
 
 # Check for any incorrect or non-numeric values in the org_budget column.
 
-view(data[, c("org_budget", "org_budget_usd", "org_budget_currency", "org_budget_currency_5_text")])
+View(data[, c("org_budget", "org_budget_usd", "org_budget_currency", "org_budget_currency_5_text")])
 
 # Five answers were answered incorrectly, placing the currency in the wrong box. Notes: 1) I assume that 8000.000 XAF refers to 8 million Francs (using a decimal point in this way is common in Francophone areas)
 # 2) one crore is the Indian term for 10 million, Lakh is the term for 100,000; 3) one other example didn't specify currency, so unable to compute
@@ -330,9 +334,9 @@ data <- data %>%
     )
   )
 
-# Preview data
+# PreView data
 
-view(data[, c("response_id", "org_budget", "org_budget_usd", "org_budget_currency", "org_currency_other")])
+View(data[, c("response_id", "org_budget", "org_budget_usd", "org_budget_currency", "org_currency_other")])
 
 #Excluding a response from org_budget_usd that doesn't specify currency (Canadian, but works in three countries, so uncertain)
 data$org_budget_usd[data$response_id == "R_2xWArVSC4E8aHNT"] <- NA
@@ -394,7 +398,7 @@ data <- data %>%
 
 # Verifying
 
-view(data[, c("western_vs_nonwestern", "country_focus", "org_country")])
+View(data[, c("western_vs_nonwestern", "country_focus", "org_country")])
 
 print(table(data$western_vs_nonwestern))
 
@@ -476,7 +480,7 @@ unique(data$interest_diet_3p)
 
 #Verification
 
-view(data[, c("interest_corp", "interest_corp_3p")])
+View(data[, c("interest_corp", "interest_corp_3p")])
 
 # Check transformed columns of interest_diet for an example, numbers match (13 Uninterested (9+4), 19 Neutral; 33 interested (19+14), 147 NAs)
 print(summary(data$interest_diet))
@@ -523,7 +527,7 @@ data <- data %>%
 
 #Verifying
 org_advocacy_focus <- data[c("org_focus", "org_advocacy")]
-view(org_advocacy_focus)
+View(org_advocacy_focus)
 
 # Check current levels (none currently factorised)
 unique(data$animal_type)
@@ -531,15 +535,18 @@ unique(data$org_advocacy)
 unique(data$org_size)
 unique(data$org_years)
 
-# Reorder 'org_size' levels
+# Adjust 'org_size' to combine "41-100" and "101+" into "41+"
+data$org_size <- ifelse(data$org_size %in% c("41-100", "101+"), "41+", as.character(data$org_size))
 data$org_size <- factor(data$org_size, 
-                        levels = c("Less than 1", "1-5", "6-10", "11-20", "21-40", "41-100", "101+"),
+                        levels = c("Less than 1", "1-5", "6-10", "11-20", "21-40", "41+"),
                         ordered = TRUE)
 
-# Reorder 'org_years' levels
+# Adjust 'org_years' to combine "Less than 1 year" and "1-2 years" into "Under 2 years"
+data$org_years <- ifelse(data$org_years %in% c("Less than 1 year", "1-2 years"), "Under 2 years", as.character(data$org_years))
 data$org_years <- factor(data$org_years, 
-                         levels = c("Less than 1 year", "1-2 years", "3-5 years", "6-10 years", "More than 10 years"),
+                         levels = c("Under 2 years", "3-5 years", "6-10 years", "More than 10 years"),
                          ordered = TRUE)
+
 
 # Additional recoding for the farmed animal variable: 
 # Create 8 binary variables for: Farmed land animals, farmed aquatic animals, dogs/ cats used for meat, companion animals, lab animals, wild animals, other captive animals, Other
@@ -614,12 +621,12 @@ data <- data %>%
 # Adjusting the column selection for verifying
 
 selected_data_animal_type <- data %>%
-  select(animal_type, animal_type_text, animal_type_other, 
+  select(animal_type, animal_type_text,
          animal_type_dogcat_meat, animal_type_companion, animal_type_other,
          animal_type_wild, animal_type_lab, animal_type_captive,
          animal_type_aquatic_farm, animal_type_land_farm)
 
-view(selected_data_animal_type)
+View(selected_data_animal_type)
 
 print(table(data$animal_type_aquatic_farm)) # 111 work on aquatic farmed animals
 print(table(data$animal_type_land_farm))# 197 work on land farmed animals
@@ -645,7 +652,7 @@ selected_data_advocacy <- data %>%
          advocacy_type_institutional, advocacy_type_direct_work,
          advocacy_type_individual_diet, advocacy_type_other)
 
-view(selected_data_advocacy)
+View(selected_data_advocacy)
 
 # Columns to factorize
 cols_to_factorize <- c(
@@ -663,6 +670,7 @@ levels(data$org_size) # 7
 levels(data$org_mission) # 4
 levels(data$western_vs_nonwestern) # 4
 levels(data$org_focus) # 6
+
 
 # -------------------------------
 # Recoding advocacy_diet variables
